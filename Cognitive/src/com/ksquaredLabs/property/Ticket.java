@@ -21,9 +21,10 @@ public class Ticket {
 	
 	public void processTicket() {
 		double[] results = contractor.calculateResultOfTicket();
-		double costResult = results[0];
-		double speedResult = results[1];
-		double qualityResult = results[2];
+		costResult = results[0];
+		speedResult = results[1];
+		qualityResult = results[2];
+		System.out.format("Ticket Results are %.2f, %.2f, %.2f\n", costResult, speedResult, qualityResult);
 		resultRating = client.calculateRating(costResult, speedResult, qualityResult);
 		
 	}

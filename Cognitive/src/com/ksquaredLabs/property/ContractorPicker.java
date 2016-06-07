@@ -54,7 +54,8 @@ public class ContractorPicker {
 		ContractorComparator comparator = new ContractorComparator();
 		comparator.type = type;
 		Collections.sort(contractors, comparator);
-		if (good) {
+//		System.out.println("Ordered by: " + type + " Contractors: " + contractors);
+		if (!good) {
 			return contractors.get(0);
 		} else {
 			return contractors.get(contractors.size()-1);

@@ -15,12 +15,22 @@ public class Client {
 	private double costFactor;
 	private double speedFactor;
 	private double qualityFactor;
+	private double costRating = 7.0;
+	private double speedRating = 7.0;
+	private double qualityRating = 7.0;
+	
+	public Client() {
+		
+	}
 	
 	public Client(BSONObject json) {
 		name = json.get("name") + "";
 		costFactor = Double.parseDouble(json.get("cost") + "");
 		speedFactor = Double.parseDouble(json.get("speed") + "");
 		qualityFactor = Double.parseDouble(json.get("quality") + "");
+		if (json.get("costRate") != null) costFactor = Double.parseDouble(json.get("costRate") + "");
+		if (json.get("speedRate") != null) speedFactor = Double.parseDouble(json.get("speedRate") + "");
+		if (json.get("qualityRate") != null) qualityFactor = Double.parseDouble(json.get("qualityRate") + "");
 	}
 	
 	public String getName() {
@@ -55,15 +65,43 @@ public class Client {
 		this.qualityFactor = qualityFactor;
 	}
 	
+	public double getCostRating() {
+		return costRating;
+	}
+
+	public void setCostRating(double costRating) {
+		this.costRating = costRating;
+	}
+
+	public double getSpeedRating() {
+		return speedRating;
+	}
+
+	public void setSpeedRating(double speedRating) {
+		this.speedRating = speedRating;
+	}
+
+	public double getQualityRating() {
+		return qualityRating;
+	}
+
+	public void setQualityRating(double qualityRating) {
+		this.qualityRating = qualityRating;
+	}
+
+	
 	@Override
 	public String toString() {
 		return "Client [name=" + name + ", costFactor=" + costFactor + ", speedFactor=" + speedFactor
-				+ ", qualityFactor=" + qualityFactor + "]";
+				+ ", qualityFactor=" + qualityFactor + ", costRating=" + costRating + ", speedRating=" + speedRating
+				+ ", qualityRating=" + qualityRating + "]";
 	}
-	
-	
+
 	public double calculateRating(double cost, double speed, double quality) {
-		double result = cost * costFactor + speed * speedFactor + quality * qualityFactor;
+		costRating = cost * costFactor;
+		speedRating = speed * speedFactor;
+		qualityRating = quality * qualityFactor;
+		double result = costRating + speedRating + qualityRating;
 		result = result / (costFactor + speedFactor + qualityFactor) ;
 		return result;
 	}
@@ -93,6 +131,15 @@ public class Client {
 			if (object.containsField("quality")) {
 				qualityFactor = Double.parseDouble(object.get("quality").toString());
 			}
+			if (object.containsField("costRate")) {
+				costRating = Double.parseDouble(object.get("costRate").toString());
+			}
+			if (object.containsField("speedRate")) {
+				speedRating = Double.parseDouble(object.get("speedRate").toString());
+			}
+			if (object.containsField("qualityRate")) {
+				qualityRating = Double.parseDouble(object.get("qualityRate").toString());
+			}
 		} catch (Exception e) {
 			cursor.close();
 			System.err.println(e);
@@ -104,7 +151,10 @@ public class Client {
 		BasicDBObject obj = new BasicDBObject("name", name)
 				.append("cost", costFactor)
 				.append("speed", speedFactor)
-				.append("quality", qualityFactor);
+				.append("quality", qualityFactor)
+				.append("costRate", costRating)
+				.append("speedRate", speedRating)
+				.append("qualityRate", qualityRating);
 		BasicDBObject query = new BasicDBObject("_id", index);
 		coll.update(query, obj);
 		

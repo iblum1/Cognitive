@@ -30,6 +30,8 @@ public class Cognitive {
 		dB = mongoClient.getDB("mydb");
 		dB.getCollection("inputs").drop();
 		dB.getCollection("outputs").drop();
+		dB.getCollection("client").drop();
+		dB.getCollection("contractor").drop();
 	}
 
 	public static DB getDB() {

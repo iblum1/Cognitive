@@ -7,6 +7,7 @@ import java.util.Random;
 import com.ksquaredLabs.cognitive.NPSInputs;
 import com.ksquaredLabs.cognitive.PriorityCalculator;
 import com.ksquaredLabs.property.Client;
+import com.ksquaredLabs.property.Contractor;
 import com.ksquaredLabs.property.ContractorPicker;
 import com.ksquaredLabs.property.Ticket;
 import com.mongodb.BasicDBObject;
@@ -27,9 +28,13 @@ public class Main {
 		
 		DB dB = Cognitive.getDB();
 		
+		if (!dataExists(dB)) {
+			populateData(dB);
+		}
+		
 		DBCollection inputColl = dB.getCollection("inputs");
 		DBCollection outputColl = dB.getCollection("outputs");
-		BasicDBObject query = new BasicDBObject("name",args[0]);
+		BasicDBObject query = args.length > 0 ? new BasicDBObject("name",args[0]) : null;
 		ArrayList<Client> clients = Client.getListFromDB(dB.getCollection("client"), query);
 		
 		int numberOfIterations = 0;
@@ -53,6 +58,7 @@ public class Main {
 				picker.setTicket(ticket);
 				ticket.setContractor(picker.pickContractor(dB));
 				ticket.processTicket();
+//				System.out.println("Contractor picked is " + ticket.getContractor().getName());
 				
 				int i = (int) (ticket.getSpeedResult());
 				int j = (int) (ticket.getCostResult());
@@ -77,8 +83,8 @@ public class Main {
 				double y = radicies[1];
 				double z = radicies[2];
 				NPS = radicies[3];
-				System.out.format("Iteration %d: Speed/Cost/Quality base: %.2f, %.2f, %.2f.\n", 
-						timer, speedBase, costBase, qualityBase);
+				System.out.format("Name %s: Iteration %d: Speed/Cost/Quality base: %.2f, %.2f, %.2f.\n", 
+						client.getName(), timer, speedBase, costBase, qualityBase);
 				
 				outputColl.insert(toDoubleArrayObj(radicies));
 				
@@ -93,7 +99,7 @@ public class Main {
 				}
 				timer++;
 			}
-			System.out.println("Number of iterations for " + client.getName() + " ");
+			System.out.println("Number of iterations for " + client.getName() + " equals " + numberOfIterations);
 		}
 		
 	}
@@ -113,6 +119,125 @@ public class Main {
 		}
 		return y;
 //		return Math.exp(exponent) / output;
+	}
+	
+	private static boolean dataExists(DB dB) {
+		DBCollection clientCollection = dB.getCollection("client");
+		if (clientCollection.getCount() == 0) {
+			return false;
+		}
+		DBCollection contractorCollection = dB.getCollection("contractor");
+		if (contractorCollection.getCount() == 0) {
+			return false;
+		}
+		return true;
+	}
+	
+	private static void populateData(DB dB) {
+		
+		DBCollection clientCollection = dB.getCollection("client");
+		clientCollection.drop();
+		Client client = new Client();
+		client.setName("Poor Polly");
+		client.setCostFactor(10.0);
+		client.setSpeedFactor(5.0);
+		client.setQualityFactor(5.0);
+		client.insetIntoDb(clientCollection);
+		
+		client = new Client();
+		client.setName("Richie Rich");
+		client.setCostFactor(5.0);
+		client.setQualityFactor(10.0);
+		client.setSpeedFactor(10.0);
+		client.insetIntoDb(clientCollection);
+		
+		client = new Client();
+		client.setName("Speedy Gonzalez");
+		client.setCostFactor(5.0);
+		client.setQualityFactor(5.0);
+		client.setSpeedFactor(10.0);
+		client.insetIntoDb(clientCollection);
+
+		client = new Client();
+		client.setName("Sally Slow");
+		client.setCostFactor(10.0);
+		client.setQualityFactor(10.0);
+		client.setSpeedFactor(5.0);
+		client.insetIntoDb(clientCollection);
+
+		client = new Client();
+		client.setName("Sloppy Sam");
+		client.setCostFactor(10.0);
+		client.setQualityFactor(5.0);
+		client.setSpeedFactor(10.0);
+		client.insetIntoDb(clientCollection);
+
+		client = new Client();
+		client.setName("Picky Pam");
+		client.setCostFactor(5.0);
+		client.setQualityFactor(10.0);
+		client.setSpeedFactor(5.0);
+		client.insetIntoDb(clientCollection);
+
+		client = new Client();
+		client.setName("Joe Average");
+		client.setCostFactor(7.0);
+		client.setQualityFactor(7.0);
+		client.setSpeedFactor(7.0);
+		client.insetIntoDb(clientCollection);
+
+		DBCollection contractorCollection = dB.getCollection("contractor");
+		Contractor contractor = new Contractor();
+		contractor.setName("Cheap is our Middle Name");
+		contractor.setCostRating(10.0);
+		contractor.setSpeedRating(5.0);
+		contractor.setQualityRating(5.0);
+		contractor.insetIntoDb(contractorCollection);
+		
+		contractor = new Contractor();
+		contractor.setName("Nothing is free");
+		contractor.setCostRating(6.0);
+		contractor.setSpeedRating(9.0);
+		contractor.setQualityRating(9.0);
+		contractor.insetIntoDb(contractorCollection);
+		
+		contractor = new Contractor();
+		contractor.setName("How Fast is fast");
+		contractor.setCostRating(5.0);
+		contractor.setSpeedRating(10.0);
+		contractor.setQualityRating(5.0);
+		contractor.insetIntoDb(contractorCollection);
+		
+		contractor = new Contractor();
+		contractor.setName("Take our time");
+		contractor.setCostRating(9.0);
+		contractor.setSpeedRating(6.0);
+		contractor.setQualityRating(9.0);
+		contractor.insetIntoDb(contractorCollection);
+		
+		contractor = new Contractor();
+		contractor.setName("Only the Best");
+		contractor.setCostRating(5.0);
+		contractor.setSpeedRating(5.0);
+		contractor.setQualityRating(10.0);
+		contractor.insetIntoDb(contractorCollection);
+		
+		contractor = new Contractor();
+		contractor.setName("Cheap and Quick");
+		contractor.setCostRating(9.0);
+		contractor.setSpeedRating(9.0);
+		contractor.setQualityRating(6.0);
+		contractor.insetIntoDb(contractorCollection);
+		
+		contractor = new Contractor();
+		contractor.setName("Average Joe's Gym");
+		contractor.setCostRating(7.0);
+		contractor.setSpeedRating(7.0);
+		contractor.setQualityRating(7.0);
+		contractor.insetIntoDb(contractorCollection);
+		
+		
+		
 	}
 
 }

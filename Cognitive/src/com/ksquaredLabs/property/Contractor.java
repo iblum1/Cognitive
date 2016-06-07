@@ -20,6 +20,10 @@ public class Contractor implements Comparable<Contractor> {
 
 	public NPSInputType type;
 	
+	public Contractor () {
+		
+	}
+	
 	public Contractor(BSONObject json) {
 		name = json.get("name") + "";
 		costRating = Double.parseDouble(json.get("cost") + "");
