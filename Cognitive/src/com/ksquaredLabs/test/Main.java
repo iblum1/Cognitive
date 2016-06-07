@@ -51,7 +51,7 @@ public class Main {
 	
 			int timer = 0;
 			double NPS = 0;
-			while (NPS < 50.0) {
+			while (NPS < 50.0 && timer < 50) {
 				Ticket ticket = new Ticket();
 				ticket.setClient(client);
 				ContractorPicker picker = new ContractorPicker();
@@ -71,13 +71,14 @@ public class Main {
 				inputData.quality = k;
 				inputData.average = average;
 				inputData.timeStamp = new Date();
+				inputData.client = client;
 				
 				
 				inputs.add(inputData);
 				
 				inputColl.insert(inputData.toDBObject());
 				
-				double[] radicies = Cognitive.calculateOutput(calc, inputs);
+				double[] radicies = Cognitive.calculateOutput(calc, inputs, client);
 				
 				double x = radicies[0];
 				double y = radicies[1];
@@ -86,7 +87,7 @@ public class Main {
 				System.out.format("Name %s: Iteration %d: Speed/Cost/Quality base: %.2f, %.2f, %.2f.\n", 
 						client.getName(), timer, speedBase, costBase, qualityBase);
 				
-				outputColl.insert(toDoubleArrayObj(radicies));
+				outputColl.insert(toDoubleArrayObj(radicies, client));
 				
 				System.out.format("Speed/Cost/Quality Inputs: %d; %d; %d. Average: %.2f Radix: %.2f, %.2f, %.2f. NPS %.2f\n",
 						i,j,k,average,x, y, z, NPS );
@@ -104,11 +105,12 @@ public class Main {
 		
 	}
 
-	private static BasicDBObject toDoubleArrayObj(double[] radicies) {
+	private static BasicDBObject toDoubleArrayObj(double[] radicies, Client client) {
 		BasicDBObject obj = new BasicDBObject();
 		for (int i = 0;i < radicies.length; i++) {
 			obj.append("" + i, Double.toString(radicies[i]));
 		}
+		obj.append("client", client.getDBObject());
 		return obj;
 	}
 	

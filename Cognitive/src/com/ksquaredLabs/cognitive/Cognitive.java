@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import com.ksquaredLabs.cognitive.NPSInputs.NPSInputType;
+import com.ksquaredLabs.property.Client;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
@@ -39,18 +40,18 @@ public class Cognitive {
 	}
 
 	
-	public static double[] calculateOutput(PriorityCalculator calc, ArrayList<NPSInputs> inputs) {
+	public static double[] calculateOutput(PriorityCalculator calc, ArrayList<NPSInputs> inputs, Client client) {
 		double[] output = new double[4];
 		ArrayList<Date> dates = getListOfDate(inputs);
 		double speedRadix = calc.calculatePriorities(getListOfInput(NPSInputType.speed, inputs),dates);
 		double costRadix = calc.calculatePriorities(getListOfInput(NPSInputType.cost, inputs),dates);
 		double qualityRadix = calc.calculatePriorities(getListOfInput(NPSInputType.quality, inputs),dates);
-		double sum = speedRadix + costRadix + qualityRadix;
+		double sum = speedRadix * client.getSpeedFactor() + costRadix * client.getCostFactor() + qualityRadix * client.getQualityFactor();
 //		System.out.format("raw priorities: %.4f, %.4f, %.4f\n", speedRadix, costRadix, qualityRadix);
-		output[0] = speedRadix / sum;
-		output[1] = costRadix / sum;
-		output[2] = qualityRadix / sum;
-		output[3] = calculateNPS();
+		output[0] = speedRadix * client.getSpeedFactor() / sum;
+		output[1] = costRadix * client.getCostFactor() / sum;
+		output[2] = qualityRadix * client.getQualityFactor() / sum;
+		output[3] = calculateNPS(client);
 
 		return output;
 	}
@@ -83,18 +84,19 @@ public class Cognitive {
 		return output;
 	}
 	
-	private static double calculateNPS() {
+	private static double calculateNPS(Client client) {
 		double nps = 0.0;
 		
 		DBCollection coll = dB.getCollection("inputs");
-		BasicDBObject queryHigh = new BasicDBObject("average", new BasicDBObject("$gt",8.9));
-		BasicDBObject queryLow = new BasicDBObject("average", new BasicDBObject("$lt",7.0));
+		BasicDBObject query = new BasicDBObject("client.name", client.getName());
+		BasicDBObject queryHigh = new BasicDBObject("average", new BasicDBObject("$gt",8.9)).append("client.name", client.getName());
+		BasicDBObject queryLow = new BasicDBObject("average", new BasicDBObject("$lt",7.0)).append("client.name", client.getName());
 		
-		long countAll = coll.count();
+		long countAll = coll.count(query);
 		long countHigh = coll.count(queryHigh);
 		long countLow = coll.count(queryLow);
 		
-		System.out.println("all " + countAll + " high " + countHigh + " low " + countLow);
+		System.out.println("all " + countAll + " high " + countHigh + " low " + countLow + " name " + client.getName());
 		
 		nps = (double) countHigh / (double) countAll;
 		nps -= (double) countLow / (double) countAll;

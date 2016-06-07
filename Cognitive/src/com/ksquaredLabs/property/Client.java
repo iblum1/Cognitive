@@ -90,6 +90,11 @@ public class Client {
 	}
 
 	
+	public String toJson() {
+		return "client : {\"name\" = \"" + name + "\", \"costFactor\" = " + costFactor + ", \"speedFactor\" = " + speedFactor + ", \"qualityFactor\" = " + 
+				qualityFactor + ", \"costRating\" = " + costRating + ", \"speedRating\" = " + speedRating + ", \"qualityRating\" = " + qualityRating + "}"; 
+	}
+	
 	@Override
 	public String toString() {
 		return "Client [name=" + name + ", costFactor=" + costFactor + ", speedFactor=" + speedFactor
@@ -148,6 +153,13 @@ public class Client {
 	}
 	
 	public void updateDb(int index, DBCollection coll) {
+		BasicDBObject obj = getDBObject();
+		BasicDBObject query = new BasicDBObject("_id", index);
+		coll.update(query, obj);
+		
+	}
+	
+	public BasicDBObject getDBObject() {
 		BasicDBObject obj = new BasicDBObject("name", name)
 				.append("cost", costFactor)
 				.append("speed", speedFactor)
@@ -155,9 +167,7 @@ public class Client {
 				.append("costRate", costRating)
 				.append("speedRate", speedRating)
 				.append("qualityRate", qualityRating);
-		BasicDBObject query = new BasicDBObject("_id", index);
-		coll.update(query, obj);
-		
+		return obj;
 	}
 	
 	public void removeDb(int index, DBCollection coll) {
