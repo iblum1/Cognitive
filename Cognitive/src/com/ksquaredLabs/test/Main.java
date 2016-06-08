@@ -41,7 +41,6 @@ public class Main {
 		
 		for (Client client : clients) {
 			
-			numberOfIterations++;
 			
 			
 		
@@ -52,6 +51,7 @@ public class Main {
 			int timer = 0;
 			double NPS = 0;
 			while (NPS < 50.0 && timer < 50) {
+				System.out.println("---");
 				Ticket ticket = new Ticket();
 				ticket.setClient(client);
 				ContractorPicker picker = new ContractorPicker();
@@ -84,22 +84,23 @@ public class Main {
 				double y = radicies[1];
 				double z = radicies[2];
 				NPS = radicies[3];
-				System.out.format("Name %s: Iteration %d: Speed/Cost/Quality base: %.2f, %.2f, %.2f.\n", 
-						client.getName(), timer, speedBase, costBase, qualityBase);
+				System.out.format("Name %s, Contractor %s: \nIteration %d: Speed/Cost/Quality base: %.2f, %.2f, %.2f.\n", 
+						client.getName(), ticket.getContractor().getName(), timer, speedBase, costBase, qualityBase);
 				
 				outputColl.insert(toDoubleArrayObj(radicies, client));
 				
-				System.out.format("Speed/Cost/Quality Inputs: %d; %d; %d. Average: %.2f Radix: %.2f, %.2f, %.2f. NPS %.2f\n",
+				System.out.format("Inputs: speed %d; cost %d; quality %d. Average: %.2f \nRadix: speed %.2f, cost %.2f, quality %.2f. NPS %.2f\n",
 						i,j,k,average,x, y, z, NPS );
 				
-				try {
-					Thread.sleep(10);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+//				try {
+//					Thread.sleep(10);
+//				} catch (InterruptedException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
 				timer++;
 			}
+			numberOfIterations += timer;
 			System.out.println("Number of iterations for " + client.getName() + " equals " + numberOfIterations);
 		}
 		
@@ -142,21 +143,21 @@ public class Main {
 		Client client = new Client();
 		client.setName("Poor Polly");
 		client.setCostFactor(10.0);
-		client.setSpeedFactor(5.0);
-		client.setQualityFactor(5.0);
+		client.setSpeedFactor(2.0);
+		client.setQualityFactor(2.0);
 		client.insetIntoDb(clientCollection);
 		
 		client = new Client();
 		client.setName("Richie Rich");
-		client.setCostFactor(5.0);
+		client.setCostFactor(2.0);
 		client.setQualityFactor(10.0);
 		client.setSpeedFactor(10.0);
 		client.insetIntoDb(clientCollection);
 		
 		client = new Client();
 		client.setName("Speedy Gonzalez");
-		client.setCostFactor(5.0);
-		client.setQualityFactor(5.0);
+		client.setCostFactor(2.0);
+		client.setQualityFactor(2.0);
 		client.setSpeedFactor(10.0);
 		client.insetIntoDb(clientCollection);
 
@@ -164,21 +165,21 @@ public class Main {
 		client.setName("Sally Slow");
 		client.setCostFactor(10.0);
 		client.setQualityFactor(10.0);
-		client.setSpeedFactor(5.0);
+		client.setSpeedFactor(2.0);
 		client.insetIntoDb(clientCollection);
 
 		client = new Client();
 		client.setName("Sloppy Sam");
 		client.setCostFactor(10.0);
-		client.setQualityFactor(5.0);
+		client.setQualityFactor(2.0);
 		client.setSpeedFactor(10.0);
 		client.insetIntoDb(clientCollection);
 
 		client = new Client();
 		client.setName("Picky Pam");
-		client.setCostFactor(5.0);
+		client.setCostFactor(2.0);
 		client.setQualityFactor(10.0);
-		client.setSpeedFactor(5.0);
+		client.setSpeedFactor(2.0);
 		client.insetIntoDb(clientCollection);
 
 		client = new Client();
@@ -198,7 +199,7 @@ public class Main {
 		
 		contractor = new Contractor();
 		contractor.setName("Nothing is free");
-		contractor.setCostRating(6.0);
+		contractor.setCostRating(4.0);
 		contractor.setSpeedRating(9.0);
 		contractor.setQualityRating(9.0);
 		contractor.insetIntoDb(contractorCollection);
@@ -213,7 +214,7 @@ public class Main {
 		contractor = new Contractor();
 		contractor.setName("Take our time");
 		contractor.setCostRating(9.0);
-		contractor.setSpeedRating(6.0);
+		contractor.setSpeedRating(4.0);
 		contractor.setQualityRating(9.0);
 		contractor.insetIntoDb(contractorCollection);
 		
@@ -228,7 +229,7 @@ public class Main {
 		contractor.setName("Cheap and Quick");
 		contractor.setCostRating(9.0);
 		contractor.setSpeedRating(9.0);
-		contractor.setQualityRating(6.0);
+		contractor.setQualityRating(4.0);
 		contractor.insetIntoDb(contractorCollection);
 		
 		contractor = new Contractor();

@@ -82,8 +82,8 @@ public class Contractor implements Comparable<Contractor> {
 
 	public double[] calculateResultOfTicket() {
 		double[] results = new double[3];
-		results[0] = Util.normalProbability(costRating);
-		results[1] = Util.normalProbability(speedRating);
+		results[0] = Util.normalProbability(speedRating);
+		results[1] = Util.normalProbability(costRating);
 		results[2] = Util.normalProbability(qualityRating);
 		return results;
 	}

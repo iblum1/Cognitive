@@ -108,6 +108,8 @@ public class Client {
 		qualityRating = quality * qualityFactor;
 		double result = costRating + speedRating + qualityRating;
 		result = result / (costFactor + speedFactor + qualityFactor) ;
+//		System.out.format("input: speed %.2f, cost %.2f, quality %.2f \nfactor: speed %.2f, cost %.2f, quality %.2f;  result: %.2f\n", 
+//				speed, cost, quality, speedFactor, costFactor, qualityFactor, result);
 		return result;
 	}
 	

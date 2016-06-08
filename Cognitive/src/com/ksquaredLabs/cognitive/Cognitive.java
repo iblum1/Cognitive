@@ -47,11 +47,11 @@ public class Cognitive {
 		double costRadix = calc.calculatePriorities(getListOfInput(NPSInputType.cost, inputs),dates);
 		double qualityRadix = calc.calculatePriorities(getListOfInput(NPSInputType.quality, inputs),dates);
 		double sum = speedRadix * client.getSpeedFactor() + costRadix * client.getCostFactor() + qualityRadix * client.getQualityFactor();
-//		System.out.format("raw priorities: %.4f, %.4f, %.4f\n", speedRadix, costRadix, qualityRadix);
 		output[0] = speedRadix * client.getSpeedFactor() / sum;
 		output[1] = costRadix * client.getCostFactor() / sum;
 		output[2] = qualityRadix * client.getQualityFactor() / sum;
 		output[3] = calculateNPS(client);
+//		System.out.format("raw priorities: speed %.4f, cost %.4f, quality %.4f, NPS %.2f\n", output[0], output[1], output[2], output[3]);
 
 		return output;
 	}
