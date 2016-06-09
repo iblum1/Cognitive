@@ -22,6 +22,6 @@ public class NPSInputs {
 	}
 	
 	public enum NPSInputType {
-		speed,cost,quality;
+		speed,cost,quality,average;
 	}
 }

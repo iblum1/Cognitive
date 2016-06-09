@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 
 import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
 
 import com.ksquaredLabs.cognitive.NPSInputs.NPSInputType;
 import com.mongodb.BasicDBObject;
@@ -25,10 +26,17 @@ public class Contractor implements Comparable<Contractor> {
 	}
 	
 	public Contractor(BSONObject json) {
-		name = json.get("name") + "";
-		costRating = Double.parseDouble(json.get("cost") + "");
-		speedRating = Double.parseDouble(json.get("speed") + "");
-		qualityRating = Double.parseDouble(json.get("quality") + "");
+		BasicBSONObject obj = (BasicBSONObject) json;
+		name = obj.getString("name");
+		if (obj.containsField("cost")) {
+			costRating = obj.getDouble("cost");
+		}
+		if (obj.containsField("speed")) {
+			speedRating = obj.getDouble("speed");
+		}
+		if (obj.containsField("quality")) {
+			qualityRating = obj.getDouble("quality");
+		}
 	}
 	
 	
@@ -91,7 +99,25 @@ public class Contractor implements Comparable<Contractor> {
 	@Override
 	public String toString() {
 		return "Contractor [name=" + name + ", costRating=" + costRating + ", speedRating=" + speedRating
-				+ ", qualityRating=" + qualityRating + "]";
+				+ ", qualityRating=" + qualityRating + "]\n";
+	}
+
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Contractor other = (Contractor) obj;
+		if (name == null) {
+			if (other.name != null)
+				return false;
+		} else if (!name.equals(other.name))
+			return false;
+		return true;
 	}
 
 	public void insetIntoDb(DBCollection coll) {
@@ -136,6 +162,14 @@ public class Contractor implements Comparable<Contractor> {
 		
 	}
 	
+	public BasicDBObject getDBObject() {
+		BasicDBObject obj = new BasicDBObject("name", name)
+				.append("costRate", costRating)
+				.append("speedRate", speedRating)
+				.append("qualityRate", qualityRating);
+		return obj;
+	}
+	
 	public void removeDb(int index, DBCollection coll) {
 		BasicDBObject query = new BasicDBObject("_id", index);
 		coll.remove(query);
@@ -173,6 +207,9 @@ public class Contractor implements Comparable<Contractor> {
 	public static class ContractorComparator implements Comparator<Contractor> {
 		
 		public NPSInputType type;
+		public double averageCost;
+		public double averageSpeed;
+		public double averageQuality;
 
 		@Override
 		public int compare(Contractor o1, Contractor o2) {
@@ -183,6 +220,14 @@ public class Contractor implements Comparable<Contractor> {
 				return Double.compare(o1.speedRating,  o2.speedRating);
 			case quality:
 				return Double.compare(o1.qualityRating, o2.qualityRating);
+			case average:
+				double average1 = Math.abs(o1.costRating - averageCost) + 
+						Math.abs(o1.speedRating - averageSpeed) +
+						Math.abs(o1.qualityRating - averageQuality);
+				double average2 = Math.abs(averageCost - o2.costRating) + 
+						Math.abs(averageSpeed - o2.speedRating) +
+						Math.abs(averageQuality - o2.qualityRating);
+				return Double.compare(average1, average2);
 			default:;
 				
 			}

@@ -38,6 +38,7 @@ public class Main {
 		ArrayList<Client> clients = Client.getListFromDB(dB.getCollection("client"), query);
 		
 		int numberOfIterations = 0;
+		ContractorPicker picker = new ContractorPicker();
 		
 		for (Client client : clients) {
 			
@@ -50,15 +51,15 @@ public class Main {
 	
 			int timer = 0;
 			double NPS = 0;
-			while (NPS < 50.0 && timer < 50) {
+			while (NPS < 50.0 && timer < 6) {
 				System.out.println("---");
-				Ticket ticket = new Ticket();
-				ticket.setClient(client);
-				ContractorPicker picker = new ContractorPicker();
+				Ticket ticket = Ticket.scheduleTicket(6, 2016, client, dB.getCollection("ticket"));
 				picker.setTicket(ticket);
+				System.out.println("Ticket is " + ticket);
 				ticket.setContractor(picker.pickContractor(dB));
 				ticket.processTicket();
-//				System.out.println("Contractor picked is " + ticket.getContractor().getName());
+				ticket.insetIntoDb(dB.getCollection("ticket"));
+				System.out.format("Date is %tD, Length is %d days\n", ticket.getScheduleDate(), ticket.getDuration());
 				
 				int i = (int) (ticket.getSpeedResult());
 				int j = (int) (ticket.getCostResult());

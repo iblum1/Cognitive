@@ -33,6 +33,7 @@ public class Cognitive {
 		dB.getCollection("outputs").drop();
 		dB.getCollection("client").drop();
 		dB.getCollection("contractor").drop();
+		dB.getCollection("ticket").drop();
 	}
 
 	public static DB getDB() {
