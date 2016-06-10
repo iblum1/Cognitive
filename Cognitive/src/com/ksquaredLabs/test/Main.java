@@ -1,7 +1,9 @@
 package com.ksquaredLabs.test;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Random;
 
 import com.ksquaredLabs.cognitive.NPSInputs;
@@ -41,9 +43,6 @@ public class Main {
 		ContractorPicker picker = new ContractorPicker();
 		
 		for (Client client : clients) {
-			
-			
-			
 		
 			double speedBase = client.getSpeedFactor();
 			double costBase = client.getCostFactor();
@@ -104,7 +103,13 @@ public class Main {
 			numberOfIterations += timer;
 			System.out.println("Number of iterations for " + client.getName() + " equals " + numberOfIterations);
 		}
-		
+		ArrayList<Ticket> list = Ticket.getListFromDB(dB.getCollection("ticket"), null);
+		HashMap<Date, String> data = new HashMap<Date, String> ();
+		for (Ticket ticket : list) {
+			data.put(ticket.getScheduleDate(), ticket.getClient().getName());
+		}
+		System.out.println(data);
+		CalendarIconExample.showCalendar(data, Calendar.getInstance());
 	}
 
 	private static BasicDBObject toDoubleArrayObj(double[] radicies, Client client) {

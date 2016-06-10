@@ -87,6 +87,7 @@ public class Ticket {
 	}
 
 	public void setContractor(Contractor contractor) {
+		contractor.scheduleTicket(this);
 		this.contractor = contractor;
 	}
 

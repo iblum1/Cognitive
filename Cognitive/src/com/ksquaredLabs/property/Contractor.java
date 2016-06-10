@@ -1,7 +1,9 @@
 package com.ksquaredLabs.property;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Comparator;
+import java.util.Date;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -18,6 +20,7 @@ public class Contractor implements Comparable<Contractor> {
 	private double costRating;
 	private double speedRating;
 	private double qualityRating;
+	private ArrayList<Ticket> myTickets;
 
 	public NPSInputType type;
 	
@@ -85,6 +88,43 @@ public class Contractor implements Comparable<Contractor> {
 
 	public void setQualityRating(double qualityRating) {
 		this.qualityRating = qualityRating;
+	}
+	
+	public ArrayList<Ticket> getMyTickets() {
+		return myTickets;
+	}
+	
+	
+	public boolean available(Ticket ticket) {
+		if (myTickets == null) myTickets = new ArrayList<Ticket>();
+		for (Ticket checkTicket : myTickets) {
+			Calendar c = Calendar.getInstance();
+			c.setTime(checkTicket.getScheduleDate());
+			c.add(Calendar.DATE, -1);
+			Date checkStart = c.getTime();
+			c = Calendar.getInstance();
+			c.setTime(checkStart);
+			c.add(Calendar.DATE, checkTicket.getDuration()+1);
+			Date checkEnd = c.getTime();
+			Date ticketStart = ticket.getScheduleDate();
+			c = Calendar.getInstance();
+			c.setTime(ticketStart);
+			c.add(Calendar.DATE, ticket.getDuration());
+			Date ticketEnd = c.getTime();
+			System.out.format("Contractor name %s Dates Start %tD < %tD < %tD, %s End %tD < %tD < %tD, %s\n",
+					name,
+					checkStart, ticketStart, checkEnd, (ticketStart.after(checkStart) && ticketStart.before(checkEnd)) + "", 
+					checkStart, ticketEnd, checkEnd, (ticketEnd.after(checkStart) && ticketEnd.before(checkEnd)) + "");
+			if ((ticketStart.after(checkStart) && ticketStart.before(checkEnd)) || 
+					(ticketEnd.after(checkStart) && ticketEnd.before(checkEnd))) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	public void scheduleTicket(Ticket ticket) {
+		myTickets.add(ticket);
 	}
 
 

@@ -75,69 +75,22 @@ public class ContractorPicker {
 			contractorOrdinal = 0;
 			boolean found = false;
 			while (!found && contractorOrdinal < contractors.size()-1) {
-				found = true;
-				for (Ticket checkTicket : tickets) {
-					if (checkTicket.getContractor().equals(contractors.get(contractorOrdinal))) {
-						Date checkStart = checkTicket.getScheduleDate();
-						Calendar c = Calendar.getInstance();
-						c.setTime(checkStart);
-						c.add(Calendar.DATE, checkTicket.getDuration());
-						Date checkEnd = c.getTime();
-						Date ticketStart = ticket.getScheduleDate();
-						c = Calendar.getInstance();
-						c.setTime(ticketStart);
-						c.add(Calendar.DATE, ticket.getDuration());
-						Date ticketEnd = c.getTime();
-						System.out.format("Contractor number %d Dates checkStart %tD checkEnd %tD %s ticketStart %tD ticketEnd %tD %s\n",
-								contractorOrdinal,
-								checkStart, checkEnd, (ticketStart.after(checkStart) && ticketStart.before(checkEnd)), 
-								ticketStart, ticketEnd,(ticketEnd.before(checkStart) && ticketEnd.before(checkEnd)));
-						if ((ticketStart.after(checkStart) && ticketStart.before(checkEnd)) || 
-								(ticketEnd.before(checkStart) && ticketEnd.before(checkEnd))) {
-							found = false;
-						}
-						System.out.format("%s %d\n", found + "", contractorOrdinal);
-					}
-				}
+				found = contractors.get(contractorOrdinal).available(ticket);
 				if (!found) {
 					contractorOrdinal++;
 				}
-				System.out.format("Found %s %d\n%s\n", found + "", contractorOrdinal,contractors);
+				System.out.format("Found %s %d\n", found + "", contractorOrdinal);
 			}
 		} else {
 			contractorOrdinal = contractors.size() - 1;
 			boolean found = false;
 			while (!found && contractorOrdinal > 0) {
-				found = true;
-				for (Ticket checkTicket : tickets) {
-					if (checkTicket.getContractor().equals(contractors.get(contractorOrdinal))) {
-						Date checkStart = checkTicket.getScheduleDate();
-						Calendar c = Calendar.getInstance();
-						c.setTime(checkStart);
-						c.add(Calendar.DATE, checkTicket.getDuration());
-						Date checkEnd = c.getTime();
-						Date ticketStart = ticket.getScheduleDate();
-						c = Calendar.getInstance();
-						c.setTime(ticketStart);
-						c.add(Calendar.DATE, ticket.getDuration());
-						Date ticketEnd = c.getTime();
-						System.out.format("Contractor number %d Dates checkStart %tD checkEnd %tD %s ticketStart %tD ticketEnd %tD %s\n",
-								contractorOrdinal,
-								checkStart, checkEnd, (ticketStart.after(checkStart) && ticketStart.before(checkEnd)), 
-								ticketStart, ticketEnd,(ticketEnd.before(checkStart) && ticketEnd.before(checkEnd)));
-						if ((ticketStart.after(checkStart) && ticketStart.before(checkEnd)) || 
-								(ticketEnd.before(checkStart) && ticketEnd.before(checkEnd))) {
-							found = false;
-							break;
-						}
-						System.out.format("%s %d\n", found + "", contractorOrdinal);
-					}
-				}
+				found = contractors.get(contractorOrdinal).available(ticket);
 				if (!found) {
 					contractorOrdinal--;
 				}
 			}
-			System.out.format("Found %s %d\n%s\n", found + "", contractorOrdinal,contractors);
+			System.out.format("Found %s %d\n", found + "", contractorOrdinal);
 			
 		}
 		return contractorOrdinal;
