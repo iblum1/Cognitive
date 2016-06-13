@@ -36,44 +36,51 @@ public class ContractorPicker {
 		DBCollection coll = db.getCollection("ticket");
 		tickets = Ticket.getListFromDB(coll, null);
 		Client client = ticket.getClient();
+		Contractor contractor = null;
+		System.out.format("client %s, cost %.2f speed %.2f quality %.2f\n", client.getName(), client.getCostFactor(), client.getSpeedFactor(), client.getQualityFactor());
 		if (client.getCostFactor() > client.getSpeedFactor() && client.getCostFactor() > client.getQualityFactor()) {
 			// pick cheap contractor
-			return pickContractorByRating(NPSInputType.cost, true, ticket);
+			contractor = pickContractorByRating(NPSInputType.cost, true, ticket);
 		} else if (client.getSpeedFactor() > client.getCostFactor() && client.getSpeedFactor() > client.getQualityFactor()) {
 			// pick fast contractor
-			return pickContractorByRating(NPSInputType.speed, true, ticket);
+			contractor = pickContractorByRating(NPSInputType.speed, true, ticket);
 		} else if (client.getQualityFactor() > client.getSpeedFactor() && client.getCostFactor() < client.getQualityFactor()) {
 			// pick quality contractor
-			return pickContractorByRating(NPSInputType.quality, true, ticket);
-		} if (client.getCostFactor() < client.getSpeedFactor() && client.getCostFactor() < client.getQualityFactor()) {
+			contractor = pickContractorByRating(NPSInputType.quality, true, ticket);
+		} else if (client.getCostFactor() < client.getSpeedFactor() && client.getCostFactor() < client.getQualityFactor()) {
 			// pick expensive contractor
-			return pickContractorByRating(NPSInputType.cost, false, ticket);
+			contractor = pickContractorByRating(NPSInputType.cost, false, ticket);
 		} else if (client.getSpeedFactor() < client.getCostFactor() && client.getSpeedFactor() < client.getQualityFactor()) {
 			// pick slow contractor
-			return pickContractorByRating(NPSInputType.speed, false, ticket);
+			contractor = pickContractorByRating(NPSInputType.speed, false, ticket);
 		} else if (client.getQualityFactor() < client.getSpeedFactor() && client.getCostFactor() > client.getQualityFactor()) {
 			// pick quality contractor
-			return pickContractorByRating(NPSInputType.quality, false, ticket);
+			contractor = pickContractorByRating(NPSInputType.quality, false, ticket);
 		} else {
 			// pick average contractor
-			return pickAverageContractor(ticket);
+			contractor = pickAverageContractor(ticket);
 		}
-		
+		if (contractor != null) contractor.getMyTickets().add(ticket);
+		return contractor;
 	}
 	
 	public Contractor pickContractorByRating(NPSInputType type,boolean good, Ticket ticket) {
+		System.out.format("Input type %s, forward %s, by rating\n", type, good);
 		if (contractors.size() == 0) return null;
 		ContractorComparator comparator = new ContractorComparator();
 		comparator.type = type;
 		Collections.sort(contractors, comparator);
-		return contractors.get(pickContractorIdByDate(good, ticket));
+		int contractorOrdinal = pickContractorIdByDate(good, ticket);
+		if (contractorOrdinal > -1)
+			return contractors.get(contractorOrdinal);
+		else return null;
 	}
 	
 	private int pickContractorIdByDate(boolean good, Ticket ticket) {
 		int contractorOrdinal = 0;
+		boolean found = false;
 		if (!good) {
 			contractorOrdinal = 0;
-			boolean found = false;
 			while (!found && contractorOrdinal < contractors.size()-1) {
 				found = contractors.get(contractorOrdinal).available(ticket);
 				if (!found) {
@@ -83,7 +90,6 @@ public class ContractorPicker {
 			}
 		} else {
 			contractorOrdinal = contractors.size() - 1;
-			boolean found = false;
 			while (!found && contractorOrdinal > 0) {
 				found = contractors.get(contractorOrdinal).available(ticket);
 				if (!found) {
@@ -93,10 +99,12 @@ public class ContractorPicker {
 			System.out.format("Found %s %d\n", found + "", contractorOrdinal);
 			
 		}
+		if (!found) return -1;
 		return contractorOrdinal;
 	}
 	
 	public Contractor pickAverageContractor(Ticket ticket) {
+		System.out.println("Input Type: Average");
 		if (contractors.size() == 0) return null;
 		ContractorComparator comparator = new ContractorComparator();
 		comparator.type = NPSInputType.average;
@@ -117,6 +125,9 @@ public class ContractorPicker {
 		Collections.sort(contractors,comparator);
 		
 		
-		return contractors.get(pickContractorIdByDate(true,ticket));
+		int contractorOrdinal = pickContractorIdByDate(true, ticket);
+		if (contractorOrdinal > -1)
+			return contractors.get(contractorOrdinal);
+		else return null;
 	}
 }

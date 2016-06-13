@@ -138,6 +138,10 @@ public class Ticket {
 		calendar.set(Calendar.YEAR, Year);
 		if (Month > 12) throw new IndexOutOfBoundsException();
 		calendar.set(Calendar.MONTH, Month);
+		calendar.set(Calendar.HOUR_OF_DAY,0);
+		calendar.set(Calendar.MINUTE, 0);
+		calendar.set(Calendar.SECOND, 0);
+		calendar.set(Calendar.MILLISECOND, 0);
 		int daysQty = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
 		Date scheduleDate = null;
 		boolean found = false;

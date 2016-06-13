@@ -10,6 +10,7 @@ import java.awt.Graphics;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -22,9 +23,9 @@ public class CalendarIconExample extends JComponent {
 	private Font dateFont, dayFont, monthFont;
 	private FontMetrics date, day, month;
 	private boolean showTime = true;
-	private HashMap<Date, String> data = new HashMap<Date, String> ();
+	private HashMap<Integer, Integer> data = new HashMap<Integer, Integer>();
 	
-	public CalendarIconExample(Calendar c, boolean show, int nx, int ny, HashMap<Date, String> data) {
+	public CalendarIconExample(Calendar c, boolean show, int nx, int ny, HashMap<Integer, Integer> data) {
 		super();
 		System.out.format("Third Constructor %s\n",data);
 		cal = c;
@@ -61,7 +62,7 @@ public class CalendarIconExample extends JComponent {
 		g.setFont(monthFont);
 		g.setColor(Color.red);
 		int w = month.stringWidth(st);
-		g.drawString(st, x + nx + ((width - w) / 2), y + ny + 10);
+		g.drawString(st, x + nx + ((width - w) / 2), y + ny + 15);
 
 		// day of week
 		st = "";
@@ -72,42 +73,42 @@ public class CalendarIconExample extends JComponent {
 		g.setFont(dayFont);
 		g.setColor(Color.red);
 		w = day.stringWidth(st);
-		g.drawString(st, x + nx + ((width - 2) / 2), y + ny + 25);
+		g.drawString(st, x + nx + ((width - 2) / 2), y + ny + 30);
 		
 		// day of month
 		st = "";
+		String dataString = "";
 		tempCal.set(Calendar.MONTH, c.get(Calendar.MONTH));
 		tempCal.set(Calendar.YEAR, c.get(Calendar.YEAR));
-		tempCal.set(Calendar.DAY_OF_MONTH, c.getActualMinimum(Calendar.DAY_OF_MONTH)-1);
+		tempCal.set(Calendar.DAY_OF_MONTH, c.getActualMinimum(Calendar.DAY_OF_MONTH));
 		int dow = tempCal.get(Calendar.DAY_OF_WEEK);
-		for (int i = 0;i < dow; i++) {
+		for (int i = 0;i < dow-1; i++) {
 			st += "    ";
+			dataString += "    ";
 		}
 		int week = 0;
 		int dayOfWeek;
-		String dataString = "";
 		for (int dayOfMonth = 1;dayOfMonth < tempCal.getActualMaximum(Calendar.DAY_OF_MONTH); dayOfMonth++) {
 			tempCal.set(Calendar.DAY_OF_MONTH, dayOfMonth);
 			dayOfWeek = tempCal.get(Calendar.DAY_OF_WEEK);
 			st += String.format("  %td", tempCal);
-			String temp = data.get(tempCal.getTime());
-			if (temp != null) {
-				if (temp.length() > 3) temp = temp.substring(0,3);
-				dataString += temp;
+			if (data.containsKey(dayOfMonth)) {
+				dataString += "  " + data.get(dayOfMonth) + " ";
+			} else {
+				dataString += "  0 ";
 			}
-			dataString += " ";
-			if (dayOfWeek == Calendar.SUNDAY) {
+			if (dayOfWeek == Calendar.SATURDAY) {
 				g.setFont(dateFont);
 				g.setColor(Color.black);
 				w = date.stringWidth(st);
-				g.drawString(st, x + nx + ((width - 2) / 2), y + ny + 35 + week * 30);
+				g.drawString(st, x + nx + ((width - 2) / 2), y + ny + 40 + week * 30);
 				Calendar d = Calendar.getInstance();
 				d.setTime(tempCal.getTime());
 				st = "";
 				g.setFont(dateFont);
 				g.setColor(Color.blue);
 				w = date.stringWidth(dataString);
-				g.drawString(dataString, x + nx + ((width - 2) / 2), y + ny + 35 + week * 30 + 15);
+				g.drawString(dataString, x + nx + ((width - 2) / 2), y + ny + 40 + week * 30 + 15);
 				dataString = "";
 				week++;
 				
@@ -116,34 +117,34 @@ public class CalendarIconExample extends JComponent {
 		g.setFont(dateFont);
 		g.setColor(Color.black);
 		w = date.stringWidth(st);
-		g.drawString(st, x + nx + ((width - 2) / 2), y + ny + 35 + week * 30);
+		g.drawString(st, x + nx + ((width - 2) / 2), y + ny + 40 + week * 30);
 		Calendar d = Calendar.getInstance();
 		d.setTime(tempCal.getTime());
 		st = "";
 		g.setFont(dateFont);
 		g.setColor(Color.blue);
 		w = date.stringWidth(dataString);
-		g.drawString(dataString, x + nx + ((width - 2) / 2), y + ny + 35 + week * 30 + 15);
+		g.drawString(dataString, x + nx + ((width - 2) / 2), y + ny + 40 + week * 30 + 15);
 		dataString = "";
 		week++;
 		
 		g.setFont(dateFont);
 		g.setColor(Color.black);
 		w = date.stringWidth(st);
-		g.drawString(st, x + nx + ((width - 2) / 2), y + ny + 65 + week * 30);
+		g.drawString(st, x + nx + ((width - 2) / 2), y + ny + 70 + week * 30);
 		
 		
 	}
 	
 	public static void main(String[] args) {
-		HashMap<Date, String> data = new HashMap<Date, String> ();
+		HashMap<Integer, Integer> data = new HashMap<Integer, Integer>();
 		Calendar c = Calendar.getInstance();
 		c.set(Calendar.MONTH, Calendar.SEPTEMBER);
 		showCalendar(data, c);
 	}
 	
 	
-	public static void showCalendar(HashMap<Date, String> data, Calendar c) {
+	public static void showCalendar(HashMap<Integer,Integer> data, Calendar c) {
 		JFrame frame = new JFrame("Calendar");
 		Container container = frame.getContentPane();
 		CalendarIconExample iconExample = new CalendarIconExample(c,true,-100,10, data);

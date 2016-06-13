@@ -52,10 +52,15 @@ public class Main {
 			double NPS = 0;
 			while (NPS < 50.0 && timer < 6) {
 				System.out.println("---");
-				Ticket ticket = Ticket.scheduleTicket(6, 2016, client, dB.getCollection("ticket"));
+				Ticket ticket = Ticket.scheduleTicket(5, 2016, client, dB.getCollection("ticket"));
 				picker.setTicket(ticket);
 				System.out.println("Ticket is " + ticket);
-				ticket.setContractor(picker.pickContractor(dB));
+				Contractor contractor = picker.pickContractor(dB);
+				if (contractor == null) {
+					System.out.println("no Contractor Available");
+					break;
+				}
+				ticket.setContractor(contractor);
 				ticket.processTicket();
 				ticket.insetIntoDb(dB.getCollection("ticket"));
 				System.out.format("Date is %tD, Length is %d days\n", ticket.getScheduleDate(), ticket.getDuration());
@@ -104,12 +109,30 @@ public class Main {
 			System.out.println("Number of iterations for " + client.getName() + " equals " + numberOfIterations);
 		}
 		ArrayList<Ticket> list = Ticket.getListFromDB(dB.getCollection("ticket"), null);
-		HashMap<Date, String> data = new HashMap<Date, String> ();
+		HashMap<Integer, Integer> data = new HashMap<Integer, Integer>();
 		for (Ticket ticket : list) {
-			data.put(ticket.getScheduleDate(), ticket.getClient().getName());
+			Calendar c = Calendar.getInstance();
+			c.setTime(ticket.getScheduleDate());
+			int day1 = c.get(Calendar.DAY_OF_MONTH);
+			for (int i = 0; i < ticket.getDuration(); i++) {
+				if (day1 + i <= c.getActualMaximum(Calendar.DAY_OF_MONTH)) {
+					if (!data.containsKey(day1 + i)) {
+						data.put(day1 + i, 1);
+					} else {
+						int currentNumber = data.get(day1 + i);
+						data.put(day1 + i, currentNumber + 1);
+					}
+				}
+//				System.out.format("client is %s, contractor is %s, start is %td, duration is %d, data is %s\n",ticket.getClient().getName(), ticket.getContractor().getName(), ticket.getScheduleDate(), ticket.getDuration(), data);
+			}
 		}
 		System.out.println(data);
-		CalendarIconExample.showCalendar(data, Calendar.getInstance());
+		Calendar c = Calendar.getInstance();
+		c.set(Calendar.HOUR_OF_DAY,0);
+		c.set(Calendar.MINUTE, 0);
+		c.set(Calendar.SECOND, 0);
+		c.set(Calendar.MILLISECOND, 0);
+		CalendarIconExample.showCalendar(data, c);
 	}
 
 	private static BasicDBObject toDoubleArrayObj(double[] radicies, Client client) {

@@ -124,6 +124,7 @@ public class Contractor implements Comparable<Contractor> {
 	}
 	
 	public void scheduleTicket(Ticket ticket) {
+		if (myTickets == null) myTickets = new ArrayList<Ticket>();
 		myTickets.add(ticket);
 	}
 
