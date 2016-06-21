@@ -20,6 +20,8 @@ import com.ksquaredLabs.cognitive.*;
 public class Main {
 
 	private static ArrayList<NPSInputs> inputs = new ArrayList<NPSInputs>(); 
+	
+	private static ArrayList<Ticket> noContractor = new ArrayList<Ticket>();
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
@@ -48,9 +50,8 @@ public class Main {
 			double costBase = client.getCostFactor();
 			double qualityBase = client.getQualityFactor();
 	
-			int timer = 0;
 			double NPS = 0;
-			while (NPS < 50.0 && timer < 6) {
+			for (int timer = 0; timer < 6; timer++) {
 				System.out.println("---");
 				Ticket ticket = Ticket.scheduleTicket(5, 2016, client, dB.getCollection("ticket"));
 				picker.setTicket(ticket);
@@ -58,81 +59,84 @@ public class Main {
 				Contractor contractor = picker.pickContractor(dB);
 				if (contractor == null) {
 					System.out.println("no Contractor Available");
-					break;
+					noContractor.add(ticket);
+				} else {
+					ticket.setContractor(contractor);
+					ticket.processTicket();
+					ticket.insetIntoDb(dB.getCollection("ticket"));
+					System.out.format("Date is %tD, Length is %d days\n", ticket.getScheduleDate(), ticket.getDuration());
+					
+					int i = (int) (ticket.getSpeedResult());
+					int j = (int) (ticket.getCostResult());
+					int k = (int) (ticket.getQualityResult());
+					double average = ticket.getResultRating();
+					
+					NPSInputs inputData = new NPSInputs();
+					inputData.speed = i;
+					inputData.cost = j;
+					inputData.quality = k;
+					inputData.average = average;
+					inputData.timeStamp = new Date();
+					inputData.client = client;
+					
+					
+					inputs.add(inputData);
+					
+					inputColl.insert(inputData.toDBObject());
+					
+					double[] radicies = Cognitive.calculateOutput(calc, inputs, client);
+					
+					double x = radicies[0];
+					double y = radicies[1];
+					double z = radicies[2];
+					NPS = radicies[3];
+					System.out.format("Name %s, Contractor %s: \nIteration %d: Speed/Cost/Quality base: %.2f, %.2f, %.2f.\n", 
+							client.getName(), ticket.getContractor().getName(), timer, speedBase, costBase, qualityBase);
+					
+					outputColl.insert(toDoubleArrayObj(radicies, client));
+					
+					System.out.format("Inputs: speed %d; cost %d; quality %d. Average: %.2f \nRadix: speed %.2f, cost %.2f, quality %.2f. NPS %.2f\n",
+							i,j,k,average,x, y, z, NPS );
+					
 				}
-				ticket.setContractor(contractor);
-				ticket.processTicket();
-				ticket.insetIntoDb(dB.getCollection("ticket"));
-				System.out.format("Date is %tD, Length is %d days\n", ticket.getScheduleDate(), ticket.getDuration());
-				
-				int i = (int) (ticket.getSpeedResult());
-				int j = (int) (ticket.getCostResult());
-				int k = (int) (ticket.getQualityResult());
-				double average = ticket.getResultRating();
-				
-				NPSInputs inputData = new NPSInputs();
-				inputData.speed = i;
-				inputData.cost = j;
-				inputData.quality = k;
-				inputData.average = average;
-				inputData.timeStamp = new Date();
-				inputData.client = client;
-				
-				
-				inputs.add(inputData);
-				
-				inputColl.insert(inputData.toDBObject());
-				
-				double[] radicies = Cognitive.calculateOutput(calc, inputs, client);
-				
-				double x = radicies[0];
-				double y = radicies[1];
-				double z = radicies[2];
-				NPS = radicies[3];
-				System.out.format("Name %s, Contractor %s: \nIteration %d: Speed/Cost/Quality base: %.2f, %.2f, %.2f.\n", 
-						client.getName(), ticket.getContractor().getName(), timer, speedBase, costBase, qualityBase);
-				
-				outputColl.insert(toDoubleArrayObj(radicies, client));
-				
-				System.out.format("Inputs: speed %d; cost %d; quality %d. Average: %.2f \nRadix: speed %.2f, cost %.2f, quality %.2f. NPS %.2f\n",
-						i,j,k,average,x, y, z, NPS );
-				
-//				try {
-//					Thread.sleep(10);
-//				} catch (InterruptedException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-				timer++;
 			}
-			numberOfIterations += timer;
+			numberOfIterations += 6;
 			System.out.println("Number of iterations for " + client.getName() + " equals " + numberOfIterations);
 		}
 		ArrayList<Ticket> list = Ticket.getListFromDB(dB.getCollection("ticket"), null);
-		HashMap<Integer, Integer> data = new HashMap<Integer, Integer>();
-		for (Ticket ticket : list) {
-			Calendar c = Calendar.getInstance();
-			c.setTime(ticket.getScheduleDate());
-			int day1 = c.get(Calendar.DAY_OF_MONTH);
-			for (int i = 0; i < ticket.getDuration(); i++) {
-				if (day1 + i <= c.getActualMaximum(Calendar.DAY_OF_MONTH)) {
-					if (!data.containsKey(day1 + i)) {
-						data.put(day1 + i, 1);
-					} else {
-						int currentNumber = data.get(day1 + i);
-						data.put(day1 + i, currentNumber + 1);
+		HashMap<Integer, String> data = new HashMap<Integer, String>();
+		HashMap<String, HashMap<Integer,String>> matrix = new HashMap();
+		Calendar c = Calendar.getInstance();
+		displayResult(list, matrix, c, data, "All ", false);
+		
+		list = Ticket.getListFromDB(dB.getCollection("ticket"), null);
+		data = new HashMap<Integer, String>();
+		c = Calendar.getInstance();
+		displayResult(list, null, c, data, "Next Month ", true);
+		
+		ArrayList<Contractor> contractors = Contractor.getListFromDB(dB.getCollection("contractor"), null);
+		for (Contractor contractor : contractors) {
+			HashMap<Integer, String> cdata = new HashMap<Integer, String>();
+			c = Calendar.getInstance();
+			list = contractor.getMyTickets();
+			if (list == null) break;
+			for (Ticket ticket : list) {
+				for (int i = 0; i < ticket.getDatesOfWork().length; i++) {
+					c.setTime(ticket.getDatesOfWork()[i]);
+					int day1 = c.get(Calendar.DAY_OF_MONTH);
+					if (c.get(Calendar.MONTH) == Calendar.getInstance().get(Calendar.MONTH)) {
+						cdata.put(day1, ticket.getClient().getName().substring(0, 3));
 					}
 				}
-//				System.out.format("client is %s, contractor is %s, start is %td, duration is %d, data is %s\n",ticket.getClient().getName(), ticket.getContractor().getName(), ticket.getScheduleDate(), ticket.getDuration(), data);
 			}
+			c = getToday();
+			CalendarIconExample.showCalendar(cdata, c, contractor.getName() + " " + list.size());
 		}
-		System.out.println(data);
-		Calendar c = Calendar.getInstance();
-		c.set(Calendar.HOUR_OF_DAY,0);
-		c.set(Calendar.MINUTE, 0);
-		c.set(Calendar.SECOND, 0);
-		c.set(Calendar.MILLISECOND, 0);
-		CalendarIconExample.showCalendar(data, c);
+		
+		data = new HashMap<Integer, String>();
+		c = Calendar.getInstance();
+		displayResult(noContractor, null, c, data, "Not Serviced ", false);
+		
 	}
 
 	private static BasicDBObject toDoubleArrayObj(double[] radicies, Client client) {
@@ -270,6 +274,61 @@ public class Main {
 		
 		
 		
+	}
+	
+	private static Calendar getToday() {
+		Calendar c = Calendar.getInstance();
+		c.set(Calendar.HOUR_OF_DAY,0);
+		c.set(Calendar.MINUTE, 0);
+		c.set(Calendar.SECOND, 0);
+		c.set(Calendar.MILLISECOND, 0);
+		return c;
+	}
+	
+	private static void displayResult(ArrayList<Ticket> list, HashMap<String, HashMap<Integer, String>> matrix, Calendar c, HashMap<Integer, String> data, String title, boolean nextMonth) {
+		
+		for (Ticket ticket : list) {
+			if (matrix != null) {
+				if (!matrix.containsKey(ticket.getClient().getName())) {
+					matrix.put(ticket.getClient().getName(), new HashMap<Integer,String>());
+				}
+			}
+			for (int i = 0; i < ticket.getDatesOfWork().length; i++) {
+				c.setTime(ticket.getDatesOfWork()[i]);
+				int day1 = c.get(Calendar.DAY_OF_MONTH);
+				Calendar d = Calendar.getInstance();
+				if (nextMonth) d.add(Calendar.MONTH, 1);
+				if (c.get(Calendar.MONTH) == d.get(Calendar.MONTH)) {
+					if (!data.containsKey(day1)) {
+						data.put(day1, " 1 ");
+					} else {
+						int currentNumber = Integer.parseInt(data.get(day1).toString().trim());
+						data.put(day1, " " + (currentNumber + 1) + " ");
+					}
+					if (matrix != null) {
+						HashMap<Integer, String> clientData = matrix.get(ticket.getClient().getName());
+						if (!clientData.containsKey(day1)) {
+							clientData.put(day1," 1 ");
+						} else {
+							int num = Integer.parseInt(clientData.get(day1).toString().trim());
+							clientData.put(day1, " " + (num + 1) + " ");
+						}
+					}
+				}
+			}
+		}
+		c = getToday();
+		CalendarIconExample.showCalendar(data, c, title + list.size());
+		
+		if (matrix != null) {
+			c = getToday();
+			for (String s : matrix.keySet()) {
+				CalendarIconExample.showCalendar(matrix.get(s), c, s);
+				System.out.print(s + ": ");
+				System.out.println(matrix.get(s));
+			}
+		}
+
 	}
 
 }

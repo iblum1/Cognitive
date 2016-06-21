@@ -23,9 +23,9 @@ public class CalendarIconExample extends JComponent {
 	private Font dateFont, dayFont, monthFont;
 	private FontMetrics date, day, month;
 	private boolean showTime = true;
-	private HashMap<Integer, Integer> data = new HashMap<Integer, Integer>();
+	private HashMap<Integer, String> data = new HashMap<Integer, String>();
 	
-	public CalendarIconExample(Calendar c, boolean show, int nx, int ny, HashMap<Integer, Integer> data) {
+	public CalendarIconExample(Calendar c, boolean show, int nx, int ny, HashMap<Integer, String> data) {
 		super();
 		System.out.format("Third Constructor %s\n",data);
 		cal = c;
@@ -58,7 +58,7 @@ public class CalendarIconExample extends JComponent {
 		if (showTime) super.paint(g);
 		
 		String st = String.format("%tb", c);
-		System.out.format("Month %tD\n", cal);
+//		System.out.format("Month %tD\n", cal);
 		g.setFont(monthFont);
 		g.setColor(Color.red);
 		int w = month.stringWidth(st);
@@ -93,7 +93,7 @@ public class CalendarIconExample extends JComponent {
 			dayOfWeek = tempCal.get(Calendar.DAY_OF_WEEK);
 			st += String.format("  %td", tempCal);
 			if (data.containsKey(dayOfMonth)) {
-				dataString += "  " + data.get(dayOfMonth) + " ";
+				dataString += " " + data.get(dayOfMonth) + "";
 			} else {
 				dataString += "  0 ";
 			}
@@ -137,15 +137,15 @@ public class CalendarIconExample extends JComponent {
 	}
 	
 	public static void main(String[] args) {
-		HashMap<Integer, Integer> data = new HashMap<Integer, Integer>();
+		HashMap<Integer, String> data = new HashMap<Integer, String>();
 		Calendar c = Calendar.getInstance();
 		c.set(Calendar.MONTH, Calendar.SEPTEMBER);
-		showCalendar(data, c);
+		showCalendar(data, c, "Calendar");
 	}
 	
 	
-	public static void showCalendar(HashMap<Integer,Integer> data, Calendar c) {
-		JFrame frame = new JFrame("Calendar");
+	public static void showCalendar(HashMap<Integer,String> data, Calendar c, String sTitle) {
+		JFrame frame = new JFrame(sTitle);
 		Container container = frame.getContentPane();
 		CalendarIconExample iconExample = new CalendarIconExample(c,true,-100,10, data);
 		container.add(iconExample);

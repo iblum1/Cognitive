@@ -7,8 +7,10 @@ import java.util.Date;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
+import org.bson.types.ObjectId;
 
 import com.ksquaredLabs.cognitive.NPSInputs.NPSInputType;
+import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
@@ -17,6 +19,7 @@ import com.mongodb.DBObject;
 public class Contractor implements Comparable<Contractor> {
 
 	private String name;
+	private ObjectId index;
 	private double costRating;
 	private double speedRating;
 	private double qualityRating;
@@ -31,14 +34,28 @@ public class Contractor implements Comparable<Contractor> {
 	public Contractor(BSONObject json) {
 		BasicBSONObject obj = (BasicBSONObject) json;
 		name = obj.getString("name");
-		if (obj.containsField("cost")) {
-			costRating = obj.getDouble("cost");
+		if (obj.containsField("costRate")) {
+			costRating = obj.getDouble("costRate");
 		}
-		if (obj.containsField("speed")) {
-			speedRating = obj.getDouble("speed");
+		if (obj.containsField("speedRate")) {
+			speedRating = obj.getDouble("speedRate");
 		}
-		if (obj.containsField("quality")) {
-			qualityRating = obj.getDouble("quality");
+		if (obj.containsField("qualityRate")) {
+			qualityRating = obj.getDouble("qualityRate");
+		}
+		if (obj.containsField("tickets")) {
+			BasicDBList list = (BasicDBList) obj.get("tickets"); 
+			if (list != null) {
+				ArrayList<BasicDBObject> thisList = (ArrayList) list;
+				myTickets = new ArrayList();
+				for (BasicDBObject object : thisList) {
+					Ticket ticket = new Ticket(object);
+					myTickets.add(ticket);
+				}
+			}
+		}
+		if (obj.containsField("_id")) {
+			index = obj.getObjectId("_id");
 		}
 	}
 	
@@ -97,27 +114,16 @@ public class Contractor implements Comparable<Contractor> {
 	
 	public boolean available(Ticket ticket) {
 		if (myTickets == null) myTickets = new ArrayList<Ticket>();
-		for (Ticket checkTicket : myTickets) {
-			Calendar c = Calendar.getInstance();
-			c.setTime(checkTicket.getScheduleDate());
-			c.add(Calendar.DATE, -1);
-			Date checkStart = c.getTime();
-			c = Calendar.getInstance();
-			c.setTime(checkStart);
-			c.add(Calendar.DATE, checkTicket.getDuration()+1);
-			Date checkEnd = c.getTime();
-			Date ticketStart = ticket.getScheduleDate();
-			c = Calendar.getInstance();
-			c.setTime(ticketStart);
-			c.add(Calendar.DATE, ticket.getDuration());
-			Date ticketEnd = c.getTime();
-			System.out.format("Contractor name %s Dates Start %tD < %tD < %tD, %s End %tD < %tD < %tD, %s\n",
-					name,
-					checkStart, ticketStart, checkEnd, (ticketStart.after(checkStart) && ticketStart.before(checkEnd)) + "", 
-					checkStart, ticketEnd, checkEnd, (ticketEnd.after(checkStart) && ticketEnd.before(checkEnd)) + "");
-			if ((ticketStart.after(checkStart) && ticketStart.before(checkEnd)) || 
-					(ticketEnd.after(checkStart) && ticketEnd.before(checkEnd))) {
-				return false;
+		for (int i = 0; i < ticket.getDatesOfWork().length; i++) {
+			Date ticketDate = ticket.getDatesOfWork()[i];
+			for (Ticket checkTicket : myTickets) {
+				for(int j = 0; j < checkTicket.getDatesOfWork().length; j++) {
+					Date checkDate = checkTicket.getDatesOfWork()[j];
+//					System.out.format("checkDate %tD, ticketDate %tD\n", checkDate, ticketDate);
+					if (checkDate.equals(ticketDate)) {
+						return false;
+					}
+				}
 			}
 		}
 		return true;
@@ -139,8 +145,8 @@ public class Contractor implements Comparable<Contractor> {
 
 	@Override
 	public String toString() {
-		return "Contractor [name=" + name + ", costRating=" + costRating + ", speedRating=" + speedRating
-				+ ", qualityRating=" + qualityRating + "]\n";
+		return "Contractor [index =" + index + ", name=" + name + ", costRating=" + costRating + ", speedRating=" + speedRating
+				+ ", qualityRating=" + qualityRating + ", tickets " + myTickets + "]\n";
 	}
 
 	
@@ -162,10 +168,7 @@ public class Contractor implements Comparable<Contractor> {
 	}
 
 	public void insetIntoDb(DBCollection coll) {
-		BasicDBObject obj = new BasicDBObject("name", name)
-				.append("cost", costRating)
-				.append("speed", speedRating)
-				.append("quality", qualityRating);
+		BasicDBObject obj = getDBObject();
 		coll.insert(obj);
 	}
 	
@@ -173,18 +176,25 @@ public class Contractor implements Comparable<Contractor> {
 		BasicDBObject query = new BasicDBObject("_id", index);
 		DBCursor cursor = coll.find(query);
 		try {
-			DBObject object = cursor.next();
+			BasicDBObject object = (BasicDBObject) cursor.next();
 			if (object.containsField("name")) {
 				name = object.get("name").toString();
 			}
-			if (object.containsField("cost")) {
-				costRating = Double.parseDouble(object.get("cost").toString());
+			if (object.containsField("costRate")) {
+				costRating = object.getDouble("costRate");
 			}
-			if (object.containsField("speed")) {
-				speedRating = Double.parseDouble(object.get("speed").toString());
+			if (object.containsField("speedRate")) {
+				speedRating = object.getDouble("speedRate");
 			}
-			if (object.containsField("quality")) {
-				qualityRating = Double.parseDouble(object.get("quality").toString());
+			if (object.containsField("qualityRate")) {
+				qualityRating = object.getDouble("qualityRate");
+			}
+			if (object.containsField("tickets")) {
+				BasicDBList list = (BasicDBList) object.get("tickets"); 
+				myTickets = (ArrayList) list;
+			}
+			if (object.containsField("_id")) {
+				index = object.getInt("_id");
 			}
 		} catch (Exception e) {
 			cursor.close();
@@ -193,26 +203,25 @@ public class Contractor implements Comparable<Contractor> {
 		
 	}
 	
-	public void updateDb(int index, DBCollection coll) {
-		BasicDBObject obj = new BasicDBObject("name", name)
-				.append("cost", costRating)
-				.append("speed", speedRating)
-				.append("quality", qualityRating);
-		BasicDBObject query = new BasicDBObject("_id", index);
-		coll.update(query, obj);
+	public void updateDb(DBCollection coll) {
+		BasicDBObject obj = getDBObject();
+		BasicDBObject query = new BasicDBObject("name", name);
+		DBObject dbObject = coll.findAndModify(query, obj);
+//		System.out.println("query is " + query + ", current object is " + dbObject + ", new object is " + obj);
 		
 	}
 	
 	public BasicDBObject getDBObject() {
 		BasicDBObject obj = new BasicDBObject("name", name)
-				.append("costRate", costRating)
-				.append("speedRate", speedRating)
-				.append("qualityRate", qualityRating);
+				.append("costRate", Double.valueOf(costRating))
+				.append("speedRate", Double.valueOf(speedRating))
+				.append("qualityRate", Double.valueOf(qualityRating))
+				.append("tickets", Ticket.toDBList(myTickets));
 		return obj;
 	}
 	
-	public void removeDb(int index, DBCollection coll) {
-		BasicDBObject query = new BasicDBObject("_id", index);
+	public void removeDb(DBCollection coll) {
+		BasicDBObject query = new BasicDBObject("name", name);
 		coll.remove(query);
 	}
 	

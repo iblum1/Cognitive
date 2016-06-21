@@ -1,12 +1,14 @@
 package com.ksquaredLabs.property;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 
+import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
@@ -22,6 +24,7 @@ public class Ticket {
 	private double speedResult;
 	private double qualityResult;
 	private double resultRating;
+	private Date[] datesOfWork;
 	
 	
 	public Ticket() {
@@ -32,9 +35,9 @@ public class Ticket {
 		if (object.containsField("client")) {
 			client = new Client((BSONObject) object.get("client"));
 		}
-		if (object.containsField("contractor")) {
-			contractor = new Contractor((BSONObject) object.get("contractor"));
-		}
+//		if (object.containsField("contractor")) {
+//			contractor = new Contractor((BSONObject) object.get("contractor"));
+//		}
 		if (object.containsField("scheduleDate")) {
 			scheduleDate = object.getDate("scheduleDate");
 		}
@@ -52,6 +55,11 @@ public class Ticket {
 		}
 		if (object.containsField("resultRating")) {
 			resultRating = object.getDouble("resultRating");
+		}
+		if (object.containsField("DOW")) {
+			BasicDBList list = (BasicDBList) object.get("DOW");
+			Date[] dA = new Date[0];
+			datesOfWork = list.toArray(dA);
 		}
 	}
 	
@@ -87,7 +95,7 @@ public class Ticket {
 	}
 
 	public void setContractor(Contractor contractor) {
-		contractor.scheduleTicket(this);
+//		contractor.scheduleTicket(this);
 		this.contractor = contractor;
 	}
 
@@ -119,11 +127,19 @@ public class Ticket {
 		this.duration = duration;
 	}
 	
+	public Date[] getDatesOfWork() {
+		return datesOfWork;
+	}
+
+	public void setDatesOfWork(Date[] datesOfWork) {
+		this.datesOfWork = datesOfWork;
+	}
+
 	@Override
 	public String toString() {
-		return "Ticket [client=" + client + ", contractor=" + contractor + ", scheduleDate=" + scheduleDate
+		return "Ticket [client=" + client + ", scheduleDate=" + scheduleDate
 				+ ", duration=" + duration + ", costResult=" + costResult + ", speedResult=" + speedResult
-				+ ", qualityResult=" + qualityResult + ", resultRating=" + resultRating + "]\n";
+				+ ", qualityResult=" + qualityResult + ", resultRating=" + resultRating + ", DatesOfWork=" + Arrays.toString(datesOfWork) + "]\n";
 	}
 
 	public void insetIntoDb(DBCollection coll) {
@@ -147,7 +163,8 @@ public class Ticket {
 		boolean found = false;
 		while (!found) {
 			int randomDay = (int) (Math.random() * (double) daysQty);
-			calendar.set(Calendar.DAY_OF_MONTH, randomDay);
+			calendar.set(Calendar.DAY_OF_MONTH, randomDay + 1);
+			System.out.format("date = %tD, day of month is %d\n",calendar,randomDay );
 			scheduleDate = calendar.getTime();
 			BasicDBObject query = new BasicDBObject("schedule",scheduleDate);
 			if (Ticket.getListFromDB(coll, query).size() < 1) {
@@ -156,6 +173,20 @@ public class Ticket {
 			}
 		}
 		ticket.setDuration((int) (Math.random() * 3.0) + 3);
+		Date[] dA = new Date[ticket.getDuration()];
+		calendar = Calendar.getInstance();
+		calendar.setTime(ticket.scheduleDate);
+		for (int i = 0; i < ticket.getDuration(); i++) {
+			if (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY) {
+				calendar.add(Calendar.DAY_OF_MONTH, 1);
+			}
+			if (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
+				calendar.add(Calendar.DAY_OF_MONTH, 1);
+			}
+			dA[i] = calendar.getTime();
+			calendar.add(Calendar.DAY_OF_MONTH, 1);
+		}
+		ticket.setDatesOfWork(dA);
 		return ticket;
 	}
 	
@@ -167,9 +198,9 @@ public class Ticket {
 			if (object.containsField("client")) {
 				client = new Client((BSONObject) object.get("client"));
 			}
-			if (object.containsField("contractor")) {
-				contractor = new Contractor((BSONObject) object.get("contractor"));
-			}
+//			if (object.containsField("contractor")) {
+//				contractor = new Contractor((BSONObject) object.get("contractor"));
+//			}
 			if (object.containsField("scheduleDate")) {
 				scheduleDate = object.getDate("scheduleDate");
 			}
@@ -188,6 +219,11 @@ public class Ticket {
 			if (object.containsField("resultRating")) {
 				resultRating = object.getDouble("resultRating");
 			}
+			if (object.containsField("DOW")) {
+				BasicDBList list = (BasicDBList) object.get("DOW");
+				Date[] dA = new Date[0];
+				datesOfWork = list.toArray(dA);
+			}
 		} catch (Exception e) {
 			cursor.close();
 			System.err.println(e);
@@ -204,13 +240,14 @@ public class Ticket {
 	
 	public BasicDBObject getDBObject() {
 		BasicDBObject obj = new BasicDBObject("client", client.getDBObject())
-				.append("contractor", contractor.getDBObject())
+//				.append("contractor", contractor.getDBObject())
 				.append("scheduleDate", scheduleDate)
 				.append("duration", duration)
 				.append("speedResult", speedResult)
 				.append("costResult", costResult)
 				.append("qualityResult", qualityResult)
-				.append("resultRating", resultRating);
+				.append("resultRating", resultRating)
+				.append("DOW", getDatesOfWork());
 		return obj;
 	}
 	
@@ -231,6 +268,15 @@ public class Ticket {
 			cursor.close();
 		}
 		return tickets;
+	}
+	
+	public static BasicDBList toDBList(ArrayList<Ticket> tickets) {
+		if (tickets == null) return null;
+		BasicDBList list = new BasicDBList();
+		for (Ticket ticket : tickets) {
+			list.add(ticket.getDBObject());
+		}
+		return list;
 	}
 
 }

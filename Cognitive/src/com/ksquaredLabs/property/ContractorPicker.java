@@ -60,7 +60,11 @@ public class ContractorPicker {
 			// pick average contractor
 			contractor = pickAverageContractor(ticket);
 		}
-		if (contractor != null) contractor.getMyTickets().add(ticket);
+		if (contractor != null) {
+			contractor.getMyTickets().add(ticket);
+			System.out.println("Contractor added is " + contractor.getName());
+			contractor.updateDb(db.getCollection("contractor"));
+		}
 		return contractor;
 	}
 	
@@ -70,6 +74,7 @@ public class ContractorPicker {
 		ContractorComparator comparator = new ContractorComparator();
 		comparator.type = type;
 		Collections.sort(contractors, comparator);
+//		System.out.println("Sorted contractors are " + contractors);
 		int contractorOrdinal = pickContractorIdByDate(good, ticket);
 		if (contractorOrdinal > -1)
 			return contractors.get(contractorOrdinal);
@@ -123,9 +128,10 @@ public class ContractorPicker {
 		comparator.averageSpeed = averageSpeed;
 		comparator.averageQuality = averageQuality;
 		Collections.sort(contractors,comparator);
+//		System.out.println("Sorted contractors are " + contractors);
 		
 		
-		int contractorOrdinal = pickContractorIdByDate(true, ticket);
+		int contractorOrdinal = pickContractorIdByDate(false, ticket);
 		if (contractorOrdinal > -1)
 			return contractors.get(contractorOrdinal);
 		else return null;
