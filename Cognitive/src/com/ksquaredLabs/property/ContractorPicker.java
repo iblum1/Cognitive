@@ -64,6 +64,9 @@ public class ContractorPicker {
 			contractor.getMyTickets().add(ticket);
 			System.out.println("Contractor added is " + contractor.getName());
 			contractor.updateDb(db.getCollection("contractor"));
+		} else {
+			ticket.push();
+			return pickContractor(db);
 		}
 		return contractor;
 	}

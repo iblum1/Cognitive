@@ -286,6 +286,10 @@ public class Main {
 	}
 	
 	private static void displayResult(ArrayList<Ticket> list, HashMap<String, HashMap<Integer, String>> matrix, Calendar c, HashMap<Integer, String> data, String title, boolean nextMonth) {
+		Calendar d = Calendar.getInstance();
+		if (nextMonth) {
+			d.add(Calendar.MONTH, 1);
+		}
 		
 		for (Ticket ticket : list) {
 			if (matrix != null) {
@@ -296,8 +300,6 @@ public class Main {
 			for (int i = 0; i < ticket.getDatesOfWork().length; i++) {
 				c.setTime(ticket.getDatesOfWork()[i]);
 				int day1 = c.get(Calendar.DAY_OF_MONTH);
-				Calendar d = Calendar.getInstance();
-				if (nextMonth) d.add(Calendar.MONTH, 1);
 				if (c.get(Calendar.MONTH) == d.get(Calendar.MONTH)) {
 					if (!data.containsKey(day1)) {
 						data.put(day1, " 1 ");
@@ -318,6 +320,9 @@ public class Main {
 			}
 		}
 		c = getToday();
+		if (nextMonth) {
+			c.add(Calendar.MONTH, 1);
+		}
 		CalendarIconExample.showCalendar(data, c, title + list.size());
 		
 		if (matrix != null) {

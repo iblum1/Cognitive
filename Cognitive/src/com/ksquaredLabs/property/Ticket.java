@@ -25,6 +25,7 @@ public class Ticket {
 	private double qualityResult;
 	private double resultRating;
 	private Date[] datesOfWork;
+	private int daysPushed = 0;
 	
 	
 	public Ticket() {
@@ -60,6 +61,9 @@ public class Ticket {
 			BasicDBList list = (BasicDBList) object.get("DOW");
 			Date[] dA = new Date[0];
 			datesOfWork = list.toArray(dA);
+		}
+		if (object.containsField("daysPushed")) {
+			daysPushed = object.getInt("daysPushed");
 		}
 	}
 	
@@ -134,12 +138,41 @@ public class Ticket {
 	public void setDatesOfWork(Date[] datesOfWork) {
 		this.datesOfWork = datesOfWork;
 	}
+	
+	public int getDaysPushed() {
+		return daysPushed;
+	}
+
+	public void setDaysPushed(int daysPushed) {
+		this.daysPushed = daysPushed;
+	}
 
 	@Override
 	public String toString() {
 		return "Ticket [client=" + client + ", scheduleDate=" + scheduleDate
 				+ ", duration=" + duration + ", costResult=" + costResult + ", speedResult=" + speedResult
-				+ ", qualityResult=" + qualityResult + ", resultRating=" + resultRating + ", DatesOfWork=" + Arrays.toString(datesOfWork) + "]\n";
+				+ ", qualityResult=" + qualityResult + ", resultRating=" + resultRating + ", DatesOfWork=" + Arrays.toString(datesOfWork) 
+				+ ", daysPushed=" + daysPushed + "]\n";
+	}
+	
+	public int push() {
+		Calendar c = Calendar.getInstance();
+		c.setTime(datesOfWork[0]);
+		c.add(Calendar.DAY_OF_MONTH, 1);
+		Date[] dA = new Date[getDuration()];
+		for (int i = 0; i < getDuration(); i++) {
+			if (c.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY) {
+				c.add(Calendar.DAY_OF_MONTH, 1);
+			}
+			if (c.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
+				c.add(Calendar.DAY_OF_MONTH, 1);
+			}
+			dA[i] = c.getTime();
+			c.add(Calendar.DAY_OF_MONTH, 1);
+		}
+		setDatesOfWork(dA);
+		daysPushed++;
+		return daysPushed;
 	}
 
 	public void insetIntoDb(DBCollection coll) {
