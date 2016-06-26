@@ -27,8 +27,9 @@ public class CalendarIconExample extends JComponent {
 	
 	public CalendarIconExample(Calendar c, boolean show, int nx, int ny, HashMap<Integer, String> data) {
 		super();
-		System.out.format("Third Constructor %s\n",data);
-		cal = c;
+		System.out.format("Third Constructor %tD %tb %s\n",c,c,data);
+		cal = Calendar.getInstance();
+		cal.setTime(c.getTime());
 		this.ny = ny;
 		this.nx = nx;
 		dateFont = new Font("Monospaced", Font.BOLD, 16);
@@ -45,8 +46,8 @@ public class CalendarIconExample extends JComponent {
 	}
 	
 	public void paintIcon(Component component, Graphics g, int x, int y) {
-		Calendar c = cal;
-		Calendar tempCal = Calendar.getInstance();
+		Calendar c = Calendar.getInstance();
+		c.setTime(cal.getTime());
 		
 		// frame
 		g.drawRect(x,  y,  dim.width - 2,  dim.height - 2);
@@ -78,6 +79,7 @@ public class CalendarIconExample extends JComponent {
 		// day of month
 		st = "";
 		String dataString = "";
+		Calendar tempCal = Calendar.getInstance();
 		tempCal.set(Calendar.MONTH, c.get(Calendar.MONTH));
 		tempCal.set(Calendar.YEAR, c.get(Calendar.YEAR));
 		tempCal.set(Calendar.DAY_OF_MONTH, c.getActualMinimum(Calendar.DAY_OF_MONTH));

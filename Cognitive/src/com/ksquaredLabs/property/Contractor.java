@@ -114,11 +114,9 @@ public class Contractor implements Comparable<Contractor> {
 	
 	public boolean available(Ticket ticket) {
 		if (myTickets == null) myTickets = new ArrayList<Ticket>();
-		for (int i = 0; i < ticket.getDatesOfWork().length; i++) {
-			Date ticketDate = ticket.getDatesOfWork()[i];
+		for (Date ticketDate : ticket.getDatesOfWork()) {
 			for (Ticket checkTicket : myTickets) {
-				for(int j = 0; j < checkTicket.getDatesOfWork().length; j++) {
-					Date checkDate = checkTicket.getDatesOfWork()[j];
+				for (Date checkDate : checkTicket.getDatesOfWork()) {
 //					System.out.format("checkDate %tD, ticketDate %tD\n", checkDate, ticketDate);
 					if (checkDate.equals(ticketDate)) {
 						return false;

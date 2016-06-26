@@ -62,11 +62,16 @@ public class ContractorPicker {
 		}
 		if (contractor != null) {
 			contractor.getMyTickets().add(ticket);
+			ticket.setContractorName(contractor.getName());
 			System.out.println("Contractor added is " + contractor.getName());
 			contractor.updateDb(db.getCollection("contractor"));
 		} else {
 			ticket.push();
-			return pickContractor(db);
+			if (ticket.getDaysPushed() < 10) { 
+				return pickContractor(db);
+			} else {
+				return null;
+			}
 		}
 		return contractor;
 	}
@@ -94,7 +99,7 @@ public class ContractorPicker {
 				if (!found) {
 					contractorOrdinal++;
 				}
-				System.out.format("Found %s %d\n", found + "", contractorOrdinal);
+//				System.out.format("Found %s %d\n", found + "", contractorOrdinal);
 			}
 		} else {
 			contractorOrdinal = contractors.size() - 1;
@@ -103,8 +108,8 @@ public class ContractorPicker {
 				if (!found) {
 					contractorOrdinal--;
 				}
+//				System.out.format("Found %s %d\n", found + "", contractorOrdinal);
 			}
-			System.out.format("Found %s %d\n", found + "", contractorOrdinal);
 			
 		}
 		if (!found) return -1;

@@ -2,9 +2,11 @@ package com.ksquaredLabs.test;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Random;
+
 
 import com.ksquaredLabs.cognitive.NPSInputs;
 import com.ksquaredLabs.cognitive.PriorityCalculator;
@@ -40,102 +42,130 @@ public class Main {
 		DBCollection outputColl = dB.getCollection("outputs");
 		BasicDBObject query = args.length > 0 ? new BasicDBObject("name",args[0]) : null;
 		ArrayList<Client> clients = Client.getListFromDB(dB.getCollection("client"), query);
+		ArrayList<Ticket> tickets = new ArrayList<Ticket> ();
 		
 		int numberOfIterations = 0;
 		ContractorPicker picker = new ContractorPicker();
 		
 		for (Client client : clients) {
 		
+			for (int timer = 0; timer < 1; timer++) {
+				Ticket ticket = Ticket.scheduleTicket(0, 2016, client, dB.getCollection("ticket"));
+				tickets.add(ticket);
+			}
+		}
+		System.out.println(tickets);
+		boolean done = false;
+		while (!done) {
+			Collections.sort(tickets);
+			Ticket ticket = Ticket.nextUnProcessedTicket(tickets);
+			Client client = ticket.getClient();
 			double speedBase = client.getSpeedFactor();
 			double costBase = client.getCostFactor();
 			double qualityBase = client.getQualityFactor();
 	
 			double NPS = 0;
-			for (int timer = 0; timer < 6; timer++) {
-				System.out.println("---");
-				Ticket ticket = Ticket.scheduleTicket(5, 2016, client, dB.getCollection("ticket"));
-				picker.setTicket(ticket);
-				System.out.println("Ticket is " + ticket);
-				Contractor contractor = picker.pickContractor(dB);
-				if (contractor == null) {
-					System.out.println("no Contractor Available");
-					noContractor.add(ticket);
-				} else {
-					ticket.setContractor(contractor);
-					ticket.processTicket();
-					ticket.insetIntoDb(dB.getCollection("ticket"));
-					System.out.format("Date is %tD, Length is %d days\n", ticket.getScheduleDate(), ticket.getDuration());
-					
-					int i = (int) (ticket.getSpeedResult());
-					int j = (int) (ticket.getCostResult());
-					int k = (int) (ticket.getQualityResult());
-					double average = ticket.getResultRating();
-					
-					NPSInputs inputData = new NPSInputs();
-					inputData.speed = i;
-					inputData.cost = j;
-					inputData.quality = k;
-					inputData.average = average;
-					inputData.timeStamp = new Date();
-					inputData.client = client;
-					
-					
-					inputs.add(inputData);
-					
-					inputColl.insert(inputData.toDBObject());
-					
-					double[] radicies = Cognitive.calculateOutput(calc, inputs, client);
-					
-					double x = radicies[0];
-					double y = radicies[1];
-					double z = radicies[2];
-					NPS = radicies[3];
-					System.out.format("Name %s, Contractor %s: \nIteration %d: Speed/Cost/Quality base: %.2f, %.2f, %.2f.\n", 
-							client.getName(), ticket.getContractor().getName(), timer, speedBase, costBase, qualityBase);
-					
-					outputColl.insert(toDoubleArrayObj(radicies, client));
-					
-					System.out.format("Inputs: speed %d; cost %d; quality %d. Average: %.2f \nRadix: speed %.2f, cost %.2f, quality %.2f. NPS %.2f\n",
-							i,j,k,average,x, y, z, NPS );
-					
+
+			picker.setTicket(ticket);
+			System.out.println("---");
+			System.out.println("Ticket is " + ticket);
+			Contractor contractor = picker.pickContractor(dB);
+			if (contractor == null) {
+				System.out.println("no Contractor Available");
+				noContractor.add(ticket);
+			} else {
+				ticket.setContractor(contractor);
+				ticket.processTicket();
+				ticket.insetIntoDb(dB.getCollection("ticket"));
+				System.out.format("Date is %tD, Length is %d days\n", ticket.getScheduleDate(), ticket.getDuration());
+				
+				int i = (int) (ticket.getSpeedResult());
+				int j = (int) (ticket.getCostResult());
+				int k = (int) (ticket.getQualityResult());
+				double average = ticket.getResultRating();
+				
+				NPSInputs inputData = new NPSInputs();
+				inputData.speed = i;
+				inputData.cost = j;
+				inputData.quality = k;
+				inputData.average = average;
+				inputData.timeStamp = new Date();
+				inputData.client = client;
+				
+				
+				inputs.add(inputData);
+				
+				inputColl.insert(inputData.toDBObject());
+				
+				Calendar reschedule = Calendar.getInstance();
+				reschedule.setTime(ticket.getScheduleDate());
+				reschedule.add(Calendar.DATE,ticket.getRecurrence());
+				if (reschedule.get(Calendar.YEAR) < 2017) {
+					Ticket rescheduledTicket = Ticket.scheduleTicket(reschedule.getTime(), client, dB.getCollection("ticket"));
+					System.out.format("Ticket added on %tD is %s",rescheduledTicket.getScheduleDate(),rescheduledTicket.toString());
+					tickets.add(rescheduledTicket);
 				}
+				
+				double[] radicies = Cognitive.calculateOutput(calc, inputs, client);
+				
+				double x = radicies[0];
+				double y = radicies[1];
+				double z = radicies[2];
+				NPS = radicies[3];
+				System.out.format("Name %s, Contractor %s: \nIteration %d: Speed/Cost/Quality base: %.2f, %.2f, %.2f.\n", 
+						client.getName(), ticket.getContractor().getName(), numberOfIterations, speedBase, costBase, qualityBase);
+				
+				outputColl.insert(toDoubleArrayObj(radicies, client));
+				
+				System.out.format("Inputs: speed %d; cost %d; quality %d. Average: %.2f \nRadix: speed %.2f, cost %.2f, quality %.2f. NPS %.2f\n",
+						i,j,k,average,x, y, z, NPS );
+				
 			}
-			numberOfIterations += 6;
-			System.out.println("Number of iterations for " + client.getName() + " equals " + numberOfIterations);
+			numberOfIterations++;
+			System.out.println(numberOfIterations + ") number of tickets is now " + tickets.size());
+
+			if (numberOfIterations > 1000) 
+				System.exit(0);
+			done = Ticket.ticketsProcessed(tickets);
 		}
 		ArrayList<Ticket> list = Ticket.getListFromDB(dB.getCollection("ticket"), null);
+		Collections.sort(list);
+		System.out.println(list);
 		HashMap<Integer, String> data = new HashMap<Integer, String>();
 		HashMap<String, HashMap<Integer,String>> matrix = new HashMap();
 		Calendar c = Calendar.getInstance();
-		displayResult(list, matrix, c, data, "All ", false);
-		
-		list = Ticket.getListFromDB(dB.getCollection("ticket"), null);
-		data = new HashMap<Integer, String>();
-		c = Calendar.getInstance();
-		displayResult(list, null, c, data, "Next Month ", true);
-		
-		ArrayList<Contractor> contractors = Contractor.getListFromDB(dB.getCollection("contractor"), null);
-		for (Contractor contractor : contractors) {
-			HashMap<Integer, String> cdata = new HashMap<Integer, String>();
-			c = Calendar.getInstance();
-			list = contractor.getMyTickets();
-			if (list == null) break;
-			for (Ticket ticket : list) {
-				for (int i = 0; i < ticket.getDatesOfWork().length; i++) {
-					c.setTime(ticket.getDatesOfWork()[i]);
-					int day1 = c.get(Calendar.DAY_OF_MONTH);
-					if (c.get(Calendar.MONTH) == Calendar.getInstance().get(Calendar.MONTH)) {
-						cdata.put(day1, ticket.getClient().getName().substring(0, 3));
-					}
-				}
+		c.set(Calendar.DAY_OF_YEAR,1);
+		for (int i = 0; i < 12; i++) {
+			displayResult(list, null, c, data, String.format("%tB ", c));
+			c.add(Calendar.MONTH, 1);
+			data = new HashMap<Integer, String>();
+			try {
+				Thread.sleep(5);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-			c = getToday();
-			CalendarIconExample.showCalendar(cdata, c, contractor.getName() + " " + list.size());
 		}
 		
-		data = new HashMap<Integer, String>();
-		c = Calendar.getInstance();
-		displayResult(noContractor, null, c, data, "Not Serviced ", false);
+//		ArrayList<Contractor> contractors = Contractor.getListFromDB(dB.getCollection("contractor"), null);
+//		for (Contractor contractor : contractors) {
+//			HashMap<Integer, String> cdata = new HashMap<Integer, String>();
+//			c = Calendar.getInstance();
+//			list = contractor.getMyTickets();
+//			if (list == null) break;
+//			for (Ticket ticket : list) {
+//				for (Date d : ticket.getDatesOfWork()) {
+//					c.setTime(d);
+//					int day1 = c.get(Calendar.DAY_OF_MONTH);
+//					if (c.get(Calendar.MONTH) == Calendar.getInstance().get(Calendar.MONTH)) {
+//						cdata.put(day1, ticket.getClient().getName().substring(0, 3));
+//					}
+//				}
+//			}
+//			c = getToday();
+//			CalendarIconExample.showCalendar(cdata, c, contractor.getName() + " " + list.size());
+//		}
+		
 		
 	}
 
@@ -285,54 +315,28 @@ public class Main {
 		return c;
 	}
 	
-	private static void displayResult(ArrayList<Ticket> list, HashMap<String, HashMap<Integer, String>> matrix, Calendar c, HashMap<Integer, String> data, String title, boolean nextMonth) {
-		Calendar d = Calendar.getInstance();
-		if (nextMonth) {
-			d.add(Calendar.MONTH, 1);
-		}
+	private static void displayResult(ArrayList<Ticket> list, HashMap<String, HashMap<Integer, String>> matrix, Calendar displayMonth, HashMap<Integer, String> data, String title) {
+		Calendar ticketMonth = Calendar.getInstance();
 		
 		for (Ticket ticket : list) {
-			if (matrix != null) {
-				if (!matrix.containsKey(ticket.getClient().getName())) {
-					matrix.put(ticket.getClient().getName(), new HashMap<Integer,String>());
-				}
-			}
-			for (int i = 0; i < ticket.getDatesOfWork().length; i++) {
-				c.setTime(ticket.getDatesOfWork()[i]);
-				int day1 = c.get(Calendar.DAY_OF_MONTH);
-				if (c.get(Calendar.MONTH) == d.get(Calendar.MONTH)) {
+			for (Date date : ticket.getDatesOfWork()) {
+				ticketMonth.setTime(date);
+				int day1 = ticketMonth.get(Calendar.DAY_OF_MONTH);
+				if (ticketMonth.get(Calendar.MONTH) == displayMonth.get(Calendar.MONTH) && ticketMonth.get(Calendar.YEAR) == displayMonth.get(Calendar.YEAR)) {
 					if (!data.containsKey(day1)) {
 						data.put(day1, " 1 ");
 					} else {
 						int currentNumber = Integer.parseInt(data.get(day1).toString().trim());
+		
 						data.put(day1, " " + (currentNumber + 1) + " ");
-					}
-					if (matrix != null) {
-						HashMap<Integer, String> clientData = matrix.get(ticket.getClient().getName());
-						if (!clientData.containsKey(day1)) {
-							clientData.put(day1," 1 ");
-						} else {
-							int num = Integer.parseInt(clientData.get(day1).toString().trim());
-							clientData.put(day1, " " + (num + 1) + " ");
-						}
 					}
 				}
 			}
 		}
-		c = getToday();
-		if (nextMonth) {
-			c.add(Calendar.MONTH, 1);
-		}
-		CalendarIconExample.showCalendar(data, c, title + list.size());
-		
-		if (matrix != null) {
-			c = getToday();
-			for (String s : matrix.keySet()) {
-				CalendarIconExample.showCalendar(matrix.get(s), c, s);
-				System.out.print(s + ": ");
-				System.out.println(matrix.get(s));
-			}
-		}
+		ticketMonth = Calendar.getInstance();
+		ticketMonth.set(Calendar.MONTH, displayMonth.get(Calendar.MONTH));
+		ticketMonth.set(Calendar.DAY_OF_MONTH, 1);
+		CalendarIconExample.showCalendar(data, ticketMonth, title + list.size());
 
 	}
 
