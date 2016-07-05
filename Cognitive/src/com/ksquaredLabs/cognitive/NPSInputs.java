@@ -2,7 +2,7 @@ package com.ksquaredLabs.cognitive;
 
 import java.util.Date;
 
-import com.ksquaredLabs.property.Client;
+import com.ksquaredLabs.property.Client.Client;
 import com.mongodb.BasicDBObject;
 
 public class NPSInputs {

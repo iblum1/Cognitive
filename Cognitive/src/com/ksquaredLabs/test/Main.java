@@ -10,10 +10,10 @@ import java.util.Random;
 
 import com.ksquaredLabs.cognitive.NPSInputs;
 import com.ksquaredLabs.cognitive.PriorityCalculator;
-import com.ksquaredLabs.property.Client;
 import com.ksquaredLabs.property.Contractor;
 import com.ksquaredLabs.property.ContractorPicker;
 import com.ksquaredLabs.property.Ticket;
+import com.ksquaredLabs.property.Client.Client;
 import com.ksquaredLabs.property.Ticket.TicketType;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;

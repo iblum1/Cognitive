@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Date;
 
 import com.ksquaredLabs.cognitive.NPSInputs.NPSInputType;
+import com.ksquaredLabs.property.Client.Client;
 import com.ksquaredLabs.property.Contractor.ContractorComparator;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;

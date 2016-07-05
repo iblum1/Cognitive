@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import com.ksquaredLabs.cognitive.NPSInputs.NPSInputType;
-import com.ksquaredLabs.property.Client;
+import com.ksquaredLabs.property.Client.Client;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;

@@ -1,4 +1,4 @@
-package com.ksquaredLabs.property;
+package com.ksquaredLabs.property.Client;
 
 import java.util.ArrayList;
 

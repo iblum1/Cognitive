@@ -7,6 +7,7 @@ import java.util.Date;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 
+import com.ksquaredLabs.property.Client.Client;
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
