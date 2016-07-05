@@ -14,6 +14,7 @@ import com.ksquaredLabs.property.Client;
 import com.ksquaredLabs.property.Contractor;
 import com.ksquaredLabs.property.ContractorPicker;
 import com.ksquaredLabs.property.Ticket;
+import com.ksquaredLabs.property.Ticket.TicketType;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
@@ -50,9 +51,14 @@ public class Main {
 		for (Client client : clients) {
 		
 			for (int timer = 0; timer < 1; timer++) {
-				Ticket ticket = Ticket.scheduleTicket(0, 2016, client, dB.getCollection("ticket"));
+				Ticket ticket = Ticket.scheduleTicket(0, 2016, client, dB.getCollection("ticket"), TicketType.project, true);
 				tickets.add(ticket);
 			}
+//			for (int i = 0; i < 5; i++) {
+//				int randomMonth = (int) (Math.random() * 11.0);
+//				Ticket ticket = Ticket.scheduleTicket(randomMonth, 2016, client, dB.getCollection("ticket"), TicketType.repair, true);
+//				tickets.add(ticket);
+//			}
 		}
 		System.out.println(tickets);
 		boolean done = false;
@@ -76,6 +82,9 @@ public class Main {
 			} else {
 				ticket.setContractor(contractor);
 				ticket.processTicket();
+				ticket.getClient().updateYearlySpend(ticket.getCost());
+				ticket.getClient().incrementTickets();
+				ticket.getClient().updateDb(dB.getCollection("client"));
 				ticket.insetIntoDb(dB.getCollection("ticket"));
 				System.out.format("Date is %tD, Length is %d days\n", ticket.getScheduleDate(), ticket.getDuration());
 				
@@ -96,14 +105,25 @@ public class Main {
 				inputs.add(inputData);
 				
 				inputColl.insert(inputData.toDBObject());
-				
-				Calendar reschedule = Calendar.getInstance();
-				reschedule.setTime(ticket.getScheduleDate());
-				reschedule.add(Calendar.DATE,ticket.getRecurrence());
-				if (reschedule.get(Calendar.YEAR) < 2017) {
-					Ticket rescheduledTicket = Ticket.scheduleTicket(reschedule.getTime(), client, dB.getCollection("ticket"));
-					System.out.format("Ticket added on %tD is %s",rescheduledTicket.getScheduleDate(),rescheduledTicket.toString());
-					tickets.add(rescheduledTicket);
+				if (ticket.getTicketType() != TicketType.repair) {
+					Calendar reschedule = Calendar.getInstance();
+					reschedule.setTime(ticket.getScheduleDate());
+					reschedule.add(Calendar.DATE,ticket.getRecurrence());
+					if (reschedule.get(Calendar.YEAR) < 2017) {
+						Ticket rescheduledTicket = Ticket.scheduleTicket(reschedule.getTime(), client, dB.getCollection("ticket"), TicketType.maintenance, false);
+						System.out.format("Ticket added on %tD is %s",rescheduledTicket.getScheduleDate(),rescheduledTicket.toString());
+						tickets.add(rescheduledTicket);
+					}
+				}
+				if (ticket.getQualityResult() < 5) {
+					Calendar scheduleRepair = Calendar.getInstance();
+					scheduleRepair.setTime(ticket.getScheduleDate());
+					scheduleRepair.add(Calendar.DATE, (int) ticket.getQualityResult());
+					if (scheduleRepair.get(Calendar.YEAR) < 2017) {
+						Ticket scheduledRepairTicket = Ticket.scheduleTicket(scheduleRepair.getTime(), client, dB.getCollection("ticket"), TicketType.repair, false);
+						System.out.format("Ticket added on %tD is %s",scheduledRepairTicket.getScheduleDate(),scheduledRepairTicket.toString());
+						tickets.add(scheduledRepairTicket);
+					}
 				}
 				
 				double[] radicies = Cognitive.calculateOutput(calc, inputs, client);
@@ -130,7 +150,7 @@ public class Main {
 		}
 		ArrayList<Ticket> list = Ticket.getListFromDB(dB.getCollection("ticket"), null);
 		Collections.sort(list);
-		System.out.println(list);
+//		System.out.println(list);
 		HashMap<Integer, String> data = new HashMap<Integer, String>();
 		HashMap<String, HashMap<Integer,String>> matrix = new HashMap();
 		Calendar c = Calendar.getInstance();
@@ -258,6 +278,7 @@ public class Main {
 		contractor.setCostRating(10.0);
 		contractor.setSpeedRating(5.0);
 		contractor.setQualityRating(5.0);
+		contractor.setCostPer(10.0);
 		contractor.insetIntoDb(contractorCollection);
 		
 		contractor = new Contractor();
@@ -265,6 +286,7 @@ public class Main {
 		contractor.setCostRating(4.0);
 		contractor.setSpeedRating(9.0);
 		contractor.setQualityRating(9.0);
+		contractor.setCostPer(15.0);
 		contractor.insetIntoDb(contractorCollection);
 		
 		contractor = new Contractor();
@@ -272,6 +294,7 @@ public class Main {
 		contractor.setCostRating(5.0);
 		contractor.setSpeedRating(10.0);
 		contractor.setQualityRating(5.0);
+		contractor.setCostPer(15.0);
 		contractor.insetIntoDb(contractorCollection);
 		
 		contractor = new Contractor();
@@ -279,6 +302,7 @@ public class Main {
 		contractor.setCostRating(9.0);
 		contractor.setSpeedRating(4.0);
 		contractor.setQualityRating(9.0);
+		contractor.setCostPer(11.0);
 		contractor.insetIntoDb(contractorCollection);
 		
 		contractor = new Contractor();
@@ -286,6 +310,7 @@ public class Main {
 		contractor.setCostRating(5.0);
 		contractor.setSpeedRating(5.0);
 		contractor.setQualityRating(10.0);
+		contractor.setCostPer(15.0);
 		contractor.insetIntoDb(contractorCollection);
 		
 		contractor = new Contractor();
@@ -293,6 +318,7 @@ public class Main {
 		contractor.setCostRating(9.0);
 		contractor.setSpeedRating(9.0);
 		contractor.setQualityRating(4.0);
+		contractor.setCostPer(10.0);
 		contractor.insetIntoDb(contractorCollection);
 		
 		contractor = new Contractor();
@@ -300,6 +326,7 @@ public class Main {
 		contractor.setCostRating(7.0);
 		contractor.setSpeedRating(7.0);
 		contractor.setQualityRating(7.0);
+		contractor.setCostPer(12.5);
 		contractor.insetIntoDb(contractorCollection);
 		
 		
@@ -308,7 +335,7 @@ public class Main {
 	
 	private static Calendar getToday() {
 		Calendar c = Calendar.getInstance();
-		c.set(Calendar.HOUR_OF_DAY,0);
+		c.set(Calendar.HOUR_OF_DAY,8);
 		c.set(Calendar.MINUTE, 0);
 		c.set(Calendar.SECOND, 0);
 		c.set(Calendar.MILLISECOND, 0);

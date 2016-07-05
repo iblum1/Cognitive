@@ -23,6 +23,8 @@ public class Contractor implements Comparable<Contractor> {
 	private double costRating;
 	private double speedRating;
 	private double qualityRating;
+	private double costPer;
+	
 	private ArrayList<Ticket> myTickets;
 
 	public NPSInputType type;
@@ -57,51 +59,38 @@ public class Contractor implements Comparable<Contractor> {
 		if (obj.containsField("_id")) {
 			index = obj.getObjectId("_id");
 		}
+		if (obj.containsField("costPer")) {
+			costPer = obj.getDouble("costPer");
+		}
 	}
-	
-	
 	
 	public String getName() {
 		return name;
 	}
 
-
-
 	public void setName(String name) {
 		this.name = name;
 	}
-
-
 
 	public double getCostRating() {
 		return costRating;
 	}
 
-
-
 	public void setCostRating(double costRating) {
 		this.costRating = costRating;
 	}
-
-
 
 	public double getSpeedRating() {
 		return speedRating;
 	}
 
-
-
 	public void setSpeedRating(double speedRating) {
 		this.speedRating = speedRating;
 	}
 
-
-
 	public double getQualityRating() {
 		return qualityRating;
 	}
-
-
 
 	public void setQualityRating(double qualityRating) {
 		this.qualityRating = qualityRating;
@@ -111,7 +100,14 @@ public class Contractor implements Comparable<Contractor> {
 		return myTickets;
 	}
 	
-	
+	public double getCostPer() {
+		return costPer;
+	}
+
+	public void setCostPer(double costPer) {
+		this.costPer = costPer;
+	}
+
 	public boolean available(Ticket ticket) {
 		if (myTickets == null) myTickets = new ArrayList<Ticket>();
 		for (Date ticketDate : ticket.getDatesOfWork()) {
@@ -147,7 +143,6 @@ public class Contractor implements Comparable<Contractor> {
 				+ ", qualityRating=" + qualityRating + ", tickets " + myTickets + "]\n";
 	}
 
-	
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -194,6 +189,10 @@ public class Contractor implements Comparable<Contractor> {
 			if (object.containsField("_id")) {
 				index = object.getInt("_id");
 			}
+			if (object.containsField("costPer")) {
+				costPer = object.getDouble("costPer");
+			}
+
 		} catch (Exception e) {
 			cursor.close();
 			System.err.println(e);
@@ -214,7 +213,8 @@ public class Contractor implements Comparable<Contractor> {
 				.append("costRate", Double.valueOf(costRating))
 				.append("speedRate", Double.valueOf(speedRating))
 				.append("qualityRate", Double.valueOf(qualityRating))
-				.append("tickets", Ticket.toDBList(myTickets));
+				.append("tickets", Ticket.toDBList(myTickets))
+				.append("costPer", costPer);
 		return obj;
 	}
 	

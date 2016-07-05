@@ -18,6 +18,8 @@ public class Client {
 	private double costRating = 7.0;
 	private double speedRating = 7.0;
 	private double qualityRating = 7.0;
+	private double yearlySpend = 0.0;
+	private int numberOfTickets = 0;
 	
 	public Client() {
 		
@@ -28,9 +30,13 @@ public class Client {
 		costFactor = Double.parseDouble(json.get("cost") + "");
 		speedFactor = Double.parseDouble(json.get("speed") + "");
 		qualityFactor = Double.parseDouble(json.get("quality") + "");
+		yearlySpend = Double.parseDouble(json.get("yearlySpend") + "");
+		numberOfTickets = Integer.parseInt(json.get("tickets") + "");
 		if (json.get("costRate") != null) costFactor = Double.parseDouble(json.get("costRate") + "");
 		if (json.get("speedRate") != null) speedFactor = Double.parseDouble(json.get("speedRate") + "");
 		if (json.get("qualityRate") != null) qualityFactor = Double.parseDouble(json.get("qualityRate") + "");
+		if (json.get("yearlySpend") != null) yearlySpend = Double.parseDouble(json.get("yearlySpend") + "");
+		if (json.get("tickets") != null) numberOfTickets = Integer.parseInt(json.get("tickets") + "");
 	}
 	
 	public String getName() {
@@ -88,18 +94,34 @@ public class Client {
 	public void setQualityRating(double qualityRating) {
 		this.qualityRating = qualityRating;
 	}
-
 	
+	public double getYearlySpend() {
+		return yearlySpend;
+	}
+
+	public void setYearlySpend(double yearlySpend) {
+		this.yearlySpend = yearlySpend;
+	}
+
+	public int getNumberOfTickets() {
+		return numberOfTickets;
+	}
+
+	public void setNumberOfTickets(int numberOfTickets) {
+		this.numberOfTickets = numberOfTickets;
+	}
+
 	public String toJson() {
 		return "client : {\"name\" = \"" + name + "\", \"costFactor\" = " + costFactor + ", \"speedFactor\" = " + speedFactor + ", \"qualityFactor\" = " + 
-				qualityFactor + ", \"costRating\" = " + costRating + ", \"speedRating\" = " + speedRating + ", \"qualityRating\" = " + qualityRating + "}"; 
+				qualityFactor + ", \"costRating\" = " + costRating + ", \"speedRating\" = " + speedRating + ", \"qualityRating\" = " + qualityRating + 
+				", \"yearlySpend\" = " + yearlySpend + ", \"tickets\" = " + numberOfTickets +"}"; 
 	}
 	
 	@Override
 	public String toString() {
-		return "Client [name=" + name + ", costFactor=" + costFactor + ", speedFactor=" + speedFactor
-				+ ", qualityFactor=" + qualityFactor + ", costRating=" + costRating + ", speedRating=" + speedRating
-				+ ", qualityRating=" + qualityRating + "]";
+		return String.format("Client [name=%s, costFactor=%.2f, speedFactor=%.2f, qualityFactor=%.2f, costRating=%.2f, speedRating=%.2f, qualityRating=%.2f, "
+				+ "yearlySpend=%.2f, numberOfTickets=%d]", 
+				name, costFactor, speedFactor, qualityFactor, costRating, speedRating, qualityRating, yearlySpend, numberOfTickets);
 	}
 
 	public double calculateRating(double cost, double speed, double quality) {
@@ -113,11 +135,21 @@ public class Client {
 		return result;
 	}
 	
+	public void updateYearlySpend(double cost) {
+		yearlySpend += cost;
+	}
+	
+	public void incrementTickets() {
+		numberOfTickets++;
+	}
+	
 	public void insetIntoDb(DBCollection coll) {
 		BasicDBObject obj = new BasicDBObject("name", name)
 				.append("cost", costFactor)
 				.append("speed", speedFactor)
-				.append("quality", qualityFactor);
+				.append("quality", qualityFactor)
+				.append("yearlySpend", yearlySpend)
+				.append("tickets", numberOfTickets);
 		coll.insert(obj);
 	}
 	
@@ -147,6 +179,12 @@ public class Client {
 			if (object.containsField("qualityRate")) {
 				qualityRating = Double.parseDouble(object.get("qualityRate").toString());
 			}
+			if (object.containsField("yearlySpend")) {
+				yearlySpend = Double.parseDouble(object.get("yearlySpend").toString());
+			}
+			if (object.containsField("tickets")) {
+				numberOfTickets = Integer.parseInt(object.get("tickets").toString());
+			}
 		} catch (Exception e) {
 			cursor.close();
 			System.err.println(e);
@@ -154,10 +192,10 @@ public class Client {
 		
 	}
 	
-	public void updateDb(int index, DBCollection coll) {
+	public void updateDb(DBCollection coll) {
 		BasicDBObject obj = getDBObject();
-		BasicDBObject query = new BasicDBObject("_id", index);
-		coll.update(query, obj);
+		BasicDBObject query = new BasicDBObject("name", name);
+		DBObject dbObject = coll.findAndModify(query, obj);
 		
 	}
 	
@@ -168,7 +206,9 @@ public class Client {
 				.append("quality", qualityFactor)
 				.append("costRate", costRating)
 				.append("speedRate", speedRating)
-				.append("qualityRate", qualityRating);
+				.append("qualityRate", qualityRating)
+				.append("yearlySpend", yearlySpend)
+				.append("tickets", numberOfTickets);
 		return obj;
 	}
 	
